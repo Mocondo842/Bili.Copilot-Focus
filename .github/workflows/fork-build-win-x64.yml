@@ -46,20 +46,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Probe runner
-        shell: pwsh
-        run: |
-          Write-Host "== runner =="
-          Get-ComputerInfo -Property WindowsProductName, WindowsVersion | Format-List
-          Write-Host "== toolchain =="
-          dotnet --version
-          Write-Host "gh: $(gh --version | Select-Object -First 1)"
-          Write-Host "7z: $((Get-Command 7z.exe).Source)"
-          Write-Host "msbuild: $((Get-Command msbuild.exe).Source)"
-
       - name: Guard (patch anchors)
         shell: pwsh
-        run: pwsh -File scripts/fork_check.ps1
+        run: |
+          $diag = Join-Path $env:RUNNER_TEMP 'diag.log'
+          "== guard ==" | Tee-Object -FilePath $diag -Append
+          pwsh -File scripts/fork_check.ps1 2>&1 | Tee-Object -FilePath $diag -Append
+          if ($LASTEXITCODE -ne 0) { throw "锚点守卫失败（退出码 $LASTEXITCODE）：补丁可能在同步中丢失" }
 
       - name: Resolve version
         id: ver
@@ -82,6 +75,25 @@ jobs:
           solution-name: src/Bili.Copilot.sln
           manifest-path: src/Desktop/BiliCopilot.UI/Package.appxmanifest
           gh-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Probe runner (advisory, never fails the job)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $diag = Join-Path $env:RUNNER_TEMP 'diag.log'
+          function Show($name, $cmd) {
+            $c = Get-Command $cmd -ErrorAction SilentlyContinue
+            $line = if ($c) { "$name = $($c.Source)" } else { "$name = (not on PATH)" }
+            $line | Tee-Object -FilePath $diag -Append
+          }
+          "== probe ==" | Tee-Object -FilePath $diag -Append
+          (Get-ComputerInfo -Property WindowsProductName, WindowsVersion -ErrorAction SilentlyContinue | Out-String) | Tee-Object -FilePath $diag -Append
+          Show 'dotnet' 'dotnet.exe'
+          Show 'gh' 'gh.exe'
+          Show '7z' '7z.exe'
+          Show 'msbuild' 'msbuild.exe'
+          Show 'makeappx' 'makeappx.exe'
+          Show 'signtool' 'signtool.exe'
 
       - name: Generate signing certificate
         id: cert
@@ -172,6 +184,7 @@ jobs:
         shell: pwsh
         run: |
           $log = Join-Path $env:RUNNER_TEMP 'build.log'
+          $diag = Join-Path $env:RUNNER_TEMP 'diag.log'
           $exitFile = Join-Path $env:RUNNER_TEMP 'exit.txt'
           $exitCode = if (Test-Path $exitFile) { (Get-Content $exitFile -Raw).Trim() } else { '(未执行到构建步骤)' }
           $lines = if (Test-Path $log) { Get-Content $log } else { @('(没有日志文件)') }
@@ -187,6 +200,7 @@ jobs:
             "| ref | ${{ github.ref_name }} |"
             "| commit | ${{ github.sha }} |"
             "| 版本 | ${{ steps.ver.outputs.version }} |"
+            "| job 状态 | ${{ job.status }} |"
             "| msbuild 退出码 | ``$exitCode`` |"
             "| 产物 | $(if ($msix) { ($msix | ForEach-Object { $_.Name + ' (' + [math]::Round($_.Length/1MB,1) + ' MB)' }) -join ', ' } else { '无 .msix' }) |"
             ""
@@ -196,7 +210,13 @@ jobs:
             ($(if ($errs) { $errs -join "`n" } else { '(无匹配的错误行)' }))
             '```'
             ""
-            "## 日志尾部（250 行）"
+            "## 早期步骤诊断（diag.log 尾部 120 行）"
+            ""
+            '```'
+            ($(if (Test-Path $diag) { (Get-Content $diag | Select-Object -Last 120) -join "`n" } else { '(没有 diag.log：任务在到达这些步骤前就结束了)' }))
+            '```'
+            ""
+            "## 构建日志尾部（250 行）"
             ""
             '```'
             ($lines | Select-Object -Last 250 | Out-String)
