@@ -1,0 +1,184 @@
+name: Fork Build (Win x64 sideload)
+
+# fork 专用：在 GitHub 托管的 Windows runner 上打包 x64 侧载包。
+# 与上游 self-hosted 的 build-sideload.yml 的区别：
+#   1) runs-on: windows-latest（不再依赖自建 runner，也不再要求 actor == Richasy）
+#   2) 不发布正式 Release，只传 artifact + 建一个 focus-* 预发布
+#   3) 无论成败都把构建报告推回 ci/logs 分支（供无 API token 的自监督读取）
+# 本文件只在 focus/derec 分支存在，master 仍是纯上游镜像。
+
+on:
+  push:
+    branches: [focus/derec]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - '.github/workflows/fork-build-win-x64.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'MSIX 版本号（x.x.x.x；留空用默认）'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+env:
+  DEFAULT_VERSION: '2.2511.2.900'
+  REPORT_BRANCH: 'ci/logs'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Probe runner
+        shell: pwsh
+        run: |
+          Write-Host "== runner =="
+          Get-ComputerInfo -Property WindowsProductName, WindowsVersion, OsHardwareAbstractionLayer | Format-List
+          Write-Host "== toolchain =="
+          dotnet --version
+          Write-Host "gh: $(gh --version | Select-Object -First 1)"
+          Write-Host "7z: $((Get-Command 7z.exe).Source)"
+          Write-Host "msbuild: $((Get-Command msbuild.exe).Source)"
+          Write-Host "== token 写权限探测（决定后面报告能否推回）=="
+          Write-Host "GITHUB_TOKEN present: $([bool]'${{ secrets.GITHUB_TOKEN }}')"
+
+      - name: Resolve version
+        id: ver
+        shell: pwsh
+        run: |
+          $v = "${{ github.event.inputs.version }}"
+          if ([string]::IsNullOrWhiteSpace($v)) { $v = "${{ env.DEFAULT_VERSION }}" }
+          if ($v -match '^\d+\.\d+\.\d+$') { $v = "$v.0" }
+          if ($v -notmatch '^\d+\.\d+\.\d+\.\d+$') { throw "版本号格式不对: $v" }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "build version = $v"
+
+      - name: Setup environment (libmpv / ffmpeg / .NET / MSBuild)
+        uses: ./.github/actions/setup-env
+        with:
+          version: ${{ steps.ver.outputs.version }}
+          sideload: 'true'
+          platform: x64
+          configuration: Release
+          solution-name: src/Bili.Copilot.sln
+          manifest-path: src/Desktop/BiliCopilot.UI/Package.appxmanifest
+          gh-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build x64 sideload package
+        id: build
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP 'build.log'
+          $project = 'src/Desktop/BiliCopilot.UI/BiliCopilot.UI.csproj'
+          Write-Host "building $project (Release|x64, SideloadOnly)"
+          msbuild $project `
+            /p:Configuration=Release `
+            /p:Platform=x64 `
+            /p:SolutionDir="${{ github.workspace }}\src\" `
+            /p:UapAppxPackageBuildMode=SideloadOnly `
+            /p:AppxBundle=Never `
+            /p:GenerateAppxPackageOnBuild=true `
+            /p:AppxPackageSigningEnabled=true `
+            /p:PackageCertificateKeyFile="BiliCopilot.UI_TemporaryKey.pfx" `
+            /p:AppxPackageDir="${{ github.workspace }}\AppPackages\" `
+            /m /v:minimal 2>&1 | Tee-Object -FilePath $log
+          $code = $LASTEXITCODE
+          "MSBUILD_EXIT=$code" | Out-File -FilePath (Join-Path $env:RUNNER_TEMP 'exit.txt') -Encoding utf8
+          if ($code -ne 0) { throw "msbuild 失败，退出码 $code（日志见 ci/logs 分支的 last-build.md）" }
+
+      - name: Collect packages
+        if: success()
+        shell: pwsh
+        run: |
+          $target = Join-Path $env:GITHUB_WORKSPACE 'FinalPackages'
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
+          $files = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Include *.msix, *.cer -Recurse
+          if (-not $files) { throw 'AppPackages 下没有找到 .msix/.cer' }
+          $files | ForEach-Object { Write-Host "copy $($_.Name)"; Copy-Item $_.FullName -Destination $target -Force }
+          Copy-Item 'scripts/Install.ps1' -Destination $target -Force
+          if (Test-Path 'docs/sideload-guide.txt') { Copy-Item 'docs/sideload-guide.txt' -Destination (Join-Path $target '安装说明.txt') -Force }
+          $zip = Join-Path $target "BiliCopilot-Focus_${{ steps.ver.outputs.version }}_x64.zip"
+          Compress-Archive -Path (Get-ChildItem $target -File | Where-Object { $_.Extension -ne '.zip' }).FullName -DestinationPath $zip -Force
+          Get-ChildItem $target | Select-Object Name, Length | Format-Table
+
+      - name: Upload artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: BiliCopilot-Focus-${{ steps.ver.outputs.version }}-x64
+          path: ${{ github.workspace }}/FinalPackages/*
+          if-no-files-found: error
+
+      - name: Publish fork prerelease
+        if: success()
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "focus-${{ steps.ver.outputs.version }}"
+          if (gh release view $tag 2>$null) { Write-Host "release $tag 已存在"; exit 0 }
+          gh release create $tag `
+            (Get-ChildItem "${{ github.workspace }}/FinalPackages" -File | ForEach-Object { $_.FullName }) `
+            --title "Focus ${{ steps.ver.outputs.version }} (Win x64 sideload)" `
+            --notes "自动构建的 x64 侧载包（去推荐化分支 focus/derec）。安装见包内 Install.ps1 与 安装说明.txt。" `
+            --prerelease
+
+      # 无论成败都把报告推回 ci/logs：这是无 API token 时唯一能读到构建日志的通道
+      - name: Push build report to ci/logs
+        if: always()
+        shell: pwsh
+        run: |
+          $log = Join-Path $env:RUNNER_TEMP 'build.log'
+          $exitFile = Join-Path $env:RUNNER_TEMP 'exit.txt'
+          $exitCode = if (Test-Path $exitFile) { (Get-Content $exitFile -Raw).Trim() } else { '(未执行到构建步骤)' }
+          $lines = if (Test-Path $log) { Get-Content $log } else { @('(没有日志文件)') }
+          $errs = $lines | Select-String -Pattern 'error [A-Z]{2,}\d+|error MSB\d+|: error|Exception|FAILED' | Select-Object -Last 80
+          $msix = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Filter *.msix -Recurse -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path 'ci' | Out-Null
+          $body = @(
+            "# Fork build report"
+            ""
+            "| 项 | 值 |"
+            "|---|---|"
+            "| run id | ${{ github.run_id }} (#${{ github.run_number }}) |"
+            "| ref | ${{ github.ref_name }} |"
+            "| commit | ${{ github.sha }} |"
+            "| 版本 | ${{ steps.ver.outputs.version }} |"
+            "| msbuild 退出码 | ``$exitCode`` |"
+            "| 产物 | $(if ($msix) { ($msix | ForEach-Object { $_.Name + ' (' + [math]::Round($_.Length/1MB,1) + ' MB)' }) -join ', ' } else { '无 .msix' }) |"
+            ""
+            "## 错误行（最多 80 条）"
+            ""
+            '```'
+            ($(if ($errs) { $errs -join "`n" } else { '(无匹配的错误行)' }))
+            '```'
+            ""
+            "## 日志尾部（250 行）"
+            ""
+            '```'
+            ($lines | Select-Object -Last 250 | Out-String)
+            '```'
+          ) -join "`n"
+          Set-Content -Path 'ci/last-build.md' -Value $body -Encoding utf8
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -f ci/last-build.md
+          git commit -m "ci: build report #${{ github.run_number }} (exit=$exitCode)" --no-verify
+          git push --force origin "HEAD:${{ env.REPORT_BRANCH }}" 2>&1 | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP 'push.log')
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning '报告分支推送失败（通常是 GITHUB_TOKEN 只有只读权限）：构建日志无法回传。'
+            Get-Content (Join-Path $env:RUNNER_TEMP 'push.log') -ErrorAction SilentlyContinue
+            exit 0
+          }
+          Write-Host '报告已推送'
