@@ -293,6 +293,18 @@ jobs:
             ($(try { (Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'FinalPackages') -ErrorAction Stop | ForEach-Object { $_.Name + '  ' + [math]::Round($_.Length/1MB,1) + ' MB' }) -join "`n" } catch { '(列不出 FinalPackages)' }))
             '```'
             ""
+            "## 交付脚本行尾/编码体检"
+            ""
+            '```'
+            ($(foreach ($f in @('scripts/Install-Focus.cmd', 'scripts/Install-Focus.ps1', 'scripts/fork-install-guide.txt')) {
+                $raw = [IO.File]::ReadAllText((Resolve-Path $f))
+                $crlf = ([regex]::Matches($raw, "`r`n")).Count
+                $bareLf = ([regex]::Matches($raw, "(?<!`r)`n")).Count
+                $head = ([IO.File]::ReadAllBytes((Resolve-Path $f))[0..2] -join ',')
+                "$f : CRLF=$crlf 裸LF=$bareLf 前三字节=$head"
+            }) -join "`n")
+            '```'
+            ""
             "## 构建日志尾部（250 行）"
             ""
             '```'
