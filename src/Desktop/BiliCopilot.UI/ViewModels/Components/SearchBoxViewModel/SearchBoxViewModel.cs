@@ -112,7 +112,7 @@ public sealed partial class SearchBoxViewModel : ViewModelBase
     [RelayCommand]
     private async Task LoadHotSearchAsync()
     {
-        if (HotSearchItems.Count > 0)
+        if (DeRecommendToolkit.Disabled || HotSearchItems.Count > 0)
         {
             return;
         }

@@ -82,7 +82,7 @@ public sealed partial class VideoConnectorViewModel
             sections.Insert(0, new VideoPlayerPlaylistSectionDetailViewModel(this, _snapshot.Playlist, AvId));
         }
 
-        if (_view.Recommends is not null)
+        if (!DeRecommendToolkit.Disabled && _view.Recommends is not null)
         {
             sections.Add(new VideoPlayerRecommendSectionDetailViewModel(this, _view.Recommends));
         }

@@ -40,7 +40,7 @@ public sealed partial class MomentUperSectionViewModel : ViewModelBase<MomentPro
         this.Get<DispatcherQueue>().TryEnqueue(DispatcherQueuePriority.Low, () =>
         {
             Items.Clear();
-            foreach (var item in momentView.Moments)
+            foreach (var item in momentView.Moments.Where(p => !DeRecommendToolkit.IsEmptyMoment(p)))
             {
                 Items.Add(new MomentItemViewModel(item, MomentCardStyle.Comprehensive, ShowComment));
             }
@@ -124,7 +124,7 @@ public sealed partial class MomentUperSectionViewModel : ViewModelBase<MomentPro
             _offset = view.Offset;
             _baseline = view.UpdateBaseline;
             _preventLoadMore = view.HasMoreMoments != true;
-            foreach (var item in view.Moments.Select(p => new MomentItemViewModel(p, MomentCardStyle.Comprehensive, ShowComment)))
+            foreach (var item in view.Moments.Where(p => !DeRecommendToolkit.IsEmptyMoment(p)).Select(p => new MomentItemViewModel(p, MomentCardStyle.Comprehensive, ShowComment)))
             {
                 Items.Add(item);
             }
@@ -140,7 +140,7 @@ public sealed partial class MomentUperSectionViewModel : ViewModelBase<MomentPro
         _preventLoadMore = !hasMore || string.IsNullOrEmpty(offset);
         if (moments is not null)
         {
-            foreach (var item in moments.Select(p => new MomentItemViewModel(p, MomentCardStyle.Comprehensive, ShowComment)))
+            foreach (var item in moments.Where(p => !DeRecommendToolkit.IsEmptyMoment(p)).Select(p => new MomentItemViewModel(p, MomentCardStyle.Comprehensive, ShowComment)))
             {
                 Items.Add(item);
             }
