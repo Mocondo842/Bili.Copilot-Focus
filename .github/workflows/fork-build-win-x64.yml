@@ -114,7 +114,7 @@ jobs:
             /p:GenerateAppxPackageOnBuild=true `
             /p:AppxPackageSigningEnabled=true `
             /p:PackageCertificateKeyFile="${{ env.CERT_FILE }}" `
-            /p:MSBuildWarningsAsErrors=APPX0105,APPX0107 `
+            /p:MSBuildWarningsAsErrors=APPX0105%3BAPPX0107 `
             /p:AppxPackageDir="${{ github.workspace }}\AppPackages\" `
             /m /v:minimal 2>&1 | Tee-Object -FilePath $log
           $code = $LASTEXITCODE
