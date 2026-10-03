@@ -3,9 +3,10 @@ name: Fork Build (Win x64 sideload)
 # fork 专用：在 GitHub 托管的 Windows runner 上打包 x64 侧载包。
 # 与上游 self-hosted 的 build-sideload.yml 的区别：
 #   1) runs-on: windows-latest（不依赖自建 runner，也不要求 actor == Richasy）
-#   2) 签名证书在 CI 内现场生成（上游那把 BiliCopilot.UI_TemporaryKey.pfx 已于 2026-09-28 过期），
-#      仓库里不放任何私钥
-#   3) 不发布正式 Release，只传 artifact + 建一个 focus-* 预发布
+#   2) 签名用仓库内自带的 focus-sideload.pfx（自签名、CN=Richasy、有效期 10 年）。
+#      上游那把 BiliCopilot.UI_TemporaryKey.pfx 的证书已于 2026-09-28 过期，用它会导致
+#      APPX0105/APPX0107、产出未签名且无法安装的 msix（run #4 实测）。
+#   3) 不发布正式 Release，只传 artifact + 建一个 focus-* 预发布（同名先删后建）
 #   4) 无论成败都把构建报告推回 ci/logs 分支（无 API token 时的自监督日志通道）
 # 本文件只在 focus/derec 分支存在，master 仍是纯上游镜像。
 
@@ -33,7 +34,8 @@ concurrency:
 env:
   DEFAULT_VERSION: '2.2511.2.900'
   REPORT_BRANCH: 'ci/logs'
-  CERT_PASSWORD: 'focus-sideload'
+  CERT_FILE: 'focus-sideload.pfx'
+  CERT_CER: 'focus-sideload.cer'
 
 jobs:
   build:
@@ -92,27 +94,9 @@ jobs:
           Show 'gh' 'gh.exe'
           Show '7z' '7z.exe'
           Show 'msbuild' 'msbuild.exe'
-          Show 'makeappx' 'makeappx.exe'
-          Show 'signtool' 'signtool.exe'
-
-      - name: Generate signing certificate
-        id: cert
-        shell: pwsh
-        run: |
-          $pfx = Join-Path $env:GITHUB_WORKSPACE 'focus-temp.pfx'
-          $cert = New-SelfSignedCertificate `
-            -Type Custom `
-            -Subject 'CN=Richasy' `
-            -KeyUsage DigitalSignature `
-            -KeyAlgorithm RSA -KeyLength 2048 `
-            -CertStoreLocation 'Cert:\CurrentUser\My' `
-            -NotAfter (Get-Date).AddYears(3) `
-            -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
-          Export-PfxCertificate -Cert $cert -FilePath $pfx `
-            -Password (ConvertTo-SecureString -String "${{ env.CERT_PASSWORD }}" -Force -AsPlainText) | Out-Null
-          Write-Host "subject=$($cert.Subject) thumbprint=$($cert.Thumbprint) notAfter=$($cert.NotAfter)"
-          "thumbprint=$($cert.Thumbprint)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "pfx=$pfx" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          $st = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
+          "signtool = $(if ($st) { $st.FullName } else { '(not found)' })" | Tee-Object -FilePath $diag -Append
+          "pfx present = $(Test-Path 'src/Desktop/BiliCopilot.UI/${{ env.CERT_FILE }}')" | Tee-Object -FilePath $diag -Append
 
       - name: Build x64 sideload package
         id: build
@@ -120,7 +104,7 @@ jobs:
         run: |
           $log = Join-Path $env:RUNNER_TEMP 'build.log'
           $project = 'src/Desktop/BiliCopilot.UI/BiliCopilot.UI.csproj'
-          Write-Host "building $project (Release|x64, SideloadOnly)"
+          Write-Host "building $project (Release|x64, SideloadOnly, signed)"
           msbuild $project `
             /p:Configuration=Release `
             /p:Platform=x64 `
@@ -129,13 +113,33 @@ jobs:
             /p:AppxBundle=Never `
             /p:GenerateAppxPackageOnBuild=true `
             /p:AppxPackageSigningEnabled=true `
-            /p:PackageCertificateKeyFile="${{ steps.cert.outputs.pfx }}" `
-            /p:PackageCertificatePassword="${{ env.CERT_PASSWORD }}" `
+            /p:PackageCertificateKeyFile="${{ env.CERT_FILE }}" `
+            /p:MSBuildWarningsAsErrors=APPX0105,APPX0107 `
             /p:AppxPackageDir="${{ github.workspace }}\AppPackages\" `
             /m /v:minimal 2>&1 | Tee-Object -FilePath $log
           $code = $LASTEXITCODE
           "MSBUILD_EXIT=$code" | Out-File -FilePath (Join-Path $env:RUNNER_TEMP 'exit.txt') -Encoding utf8
           if ($code -ne 0) { throw "msbuild 失败，退出码 $code（日志见 ci/logs 分支的 last-build.md）" }
+
+      - name: Verify package signature
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Filter *.msix -Recurse | Select-Object -First 1
+          if (-not $msix) { throw '没有找到 .msix' }
+          $diag = Join-Path $env:RUNNER_TEMP 'diag.log'
+          "== verify $($msix.Name) ==" | Tee-Object -FilePath $diag -Append
+          $imported = $true
+          try {
+            Import-Certificate -FilePath "src/Desktop/BiliCopilot.UI/${{ env.CERT_CER }}" -CertStoreLocation Cert:\CurrentUser\Root -ErrorAction Stop | Out-Null
+          } catch {
+            $imported = $false
+            Write-Warning "导入证书到 CurrentUser\Root 失败：$_（跳过信任链校验，仅确认签名存在）"
+          }
+          $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object FullName -Descending | Select-Object -First 1
+          & $signtool.FullName verify /pa /v $msix.FullName 2>&1 | Tee-Object -FilePath $diag -Append
+          $vc = $LASTEXITCODE
+          if ($vc -ne 0 -and $imported) { throw "签名校验失败（signtool 退出码 $vc）" }
+          if ($vc -ne 0) { Write-Warning "signtool 退出码 $vc（证书未能导入信任链，仅记录）" }
 
       - name: Collect packages
         if: success()
@@ -143,10 +147,9 @@ jobs:
         run: |
           $target = Join-Path $env:GITHUB_WORKSPACE 'FinalPackages'
           New-Item -ItemType Directory -Force -Path $target | Out-Null
-          $files = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Include *.msix, *.cer -Recurse -ErrorAction SilentlyContinue
-          if ($files) { $files | ForEach-Object { Write-Host "copy $($_.Name)"; Copy-Item $_.FullName -Destination $target -Force } }
-          $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Thumbprint -eq '${{ steps.cert.outputs.thumbprint }}' }
-          if ($cert) { Export-Certificate -Cert $cert -FilePath (Join-Path $target 'focus-temp.cer') | Out-Null }
+          Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Include *.msix -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object { Write-Host "copy $($_.Name)"; Copy-Item $_.FullName -Destination $target -Force }
+          Copy-Item "src/Desktop/BiliCopilot.UI/${{ env.CERT_CER }}" -Destination $target -Force
           Copy-Item 'scripts/Install.ps1' -Destination $target -Force
           if (Test-Path 'docs/sideload-guide.txt') { Copy-Item 'docs/sideload-guide.txt' -Destination (Join-Path $target '安装说明.txt') -Force }
           if (-not (Get-ChildItem $target -Filter *.msix)) { throw '没有生成 .msix' }
@@ -170,12 +173,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = "focus-${{ steps.ver.outputs.version }}"
-          gh release view $tag 2>$null
-          if ($LASTEXITCODE -eq 0) { Write-Host "release $tag 已存在，跳过"; exit 0 }
+          gh release view $tag --json tagName 2>$null | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "同名 release $tag 已存在，删除后重建（早先那份是未签名的失败产物）"
+            gh release delete $tag --yes --cleanup-tag
+          }
           gh release create $tag `
             (Get-ChildItem "${{ github.workspace }}/FinalPackages" -File | ForEach-Object { $_.FullName }) `
             --title "Focus ${{ steps.ver.outputs.version }} (Win x64 sideload)" `
-            --notes "自动构建的 x64 侧载包（去推荐化分支 focus/derec）。安装见包内 Install.ps1 与 安装说明.txt。" `
+            --notes "自动构建的 x64 侧载包（去推荐化分支 focus/derec）。安装：以管理员运行包内 Install.ps1（先导入 focus-sideload.cer，再装 msix）。" `
             --prerelease
 
       # 无论成败都把报告推回 ci/logs：这是无 API token 时唯一能读到构建日志的通道
@@ -210,10 +216,10 @@ jobs:
             ($(if ($errs) { $errs -join "`n" } else { '(无匹配的错误行)' }))
             '```'
             ""
-            "## 早期步骤诊断（diag.log 尾部 120 行）"
+            "## 早期步骤与签名校验诊断（diag.log 尾部 150 行）"
             ""
             '```'
-            ($(if (Test-Path $diag) { (Get-Content $diag | Select-Object -Last 120) -join "`n" } else { '(没有 diag.log：任务在到达这些步骤前就结束了)' }))
+            ($(if (Test-Path $diag) { (Get-Content $diag | Select-Object -Last 150) -join "`n" } else { '(没有 diag.log：任务在到达这些步骤前就结束了)' }))
             '```'
             ""
             "## 构建日志尾部（250 行）"

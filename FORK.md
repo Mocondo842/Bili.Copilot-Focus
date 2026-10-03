@@ -36,6 +36,23 @@
 
 > 这些开关存在应用的 LocalSettings 里，**卸载重装会丢**，重装后照上面再关一次即可（约 30 秒）。
 
+## 自动构建（GitHub Actions，x64 侧载包）
+
+`.github/workflows/fork-build-win-x64.yml`（只在 focus/derec 存在）在 GitHub 托管的 `windows-latest` 上打包：
+
+- 触发：推送到 focus/derec（`src/**`、`scripts/**` 或该 workflow 本身有改动时）；也支持手填版本号的手动触发。
+- 产物：`BiliCopilot.UI_<版本>_x64.msix` + `focus-sideload.cer` + `Install.ps1` + `安装说明.txt`，打成 zip 后同时进 **Actions artifact** 和 **`focus-<版本>` 预发布**（同名 tag 会先删后建）。默认版本 `2.2511.2.900`。
+- 自检：构建前跑 `scripts/fork_check.ps1` 锚点守卫；构建后跑 `signtool verify /pa`；`APPX0105/APPX0107`（签名相关告警）被升级为错误——**签名没成功就构建失败**，不会又产出一个装不上的包。
+- 构建报告：无论成败都推到 `ci/logs` 分支的 `ci/last-build.md`（含 job 状态、产物清单、诊断与日志尾部），这是没有 API token 时也能读到 CI 日志的通道。
+
+### 签名证书（为什么仓库里有一把私钥）
+
+`src/Desktop/BiliCopilot.UI/focus-sideload.pfx` + `.cer`：自签名代码签名证书，`CN=Richasy`（必须与 manifest 的 Publisher 一致），有效期 2026-10-03 → 2036-09-30。
+
+- **不是机密**：它是给侧载包签名用的临时证书，跟上游仓库里那把 `BiliCopilot.UI_TemporaryKey.pfx` 同性质；公钥（.cer）随安装包分发，安装时由 `Install.ps1` 导入到本机受信任根。
+- 之所以另起一把：上游那把的证书 **2026-09-28 已过期**，继续用会得到 APPX0105/APPX0107 告警、产出未签名且无法安装的 msix（CI run #4 实测）。
+- 有效期十年，所以证书不会每次构建都变——受信任后，后续版本可以直接覆盖安装。
+
 ## 同步上游（每次上游更新后）
 
 先在 GitHub 仓库页面点一次「Sync fork」，让 fork 的 `master` 对齐上游（fork 无法直接用 SSH 拉上游：deploy key 只授权本仓库）。然后一条命令：
