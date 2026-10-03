@@ -154,8 +154,19 @@ jobs:
           try {
             $target = Join-Path $env:GITHUB_WORKSPACE 'FinalPackages'
             New-Item -ItemType Directory -Force -Path $target | Out-Null
-            Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Include *.msix -Recurse -ErrorAction SilentlyContinue |
-              ForEach-Object { Write-Host "copy $($_.FullName)"; Copy-Item $_.FullName -Destination $target -Force }
+            # 注意：四个依赖包同名（Microsoft.WindowsAppRuntime.1.8.msix 的
+            # arm64/win32/x64/x86 版本），平铺复制会互相覆盖，最后只剩 x86。
+            # 这里显式只取 Dependencies\x64 那一份，保证 x64 机器装得上。
+            $appPkgRoot = Join-Path $env:GITHUB_WORKSPACE 'AppPackages'
+            $appMsix = Get-ChildItem $appPkgRoot -Filter *.msix -Recurse -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -notmatch '^Microsoft' } | Select-Object -First 1
+            if (-not $appMsix) { throw 'AppPackages 下找不到主应用 msix' }
+            Write-Host "app: $($appMsix.FullName)"
+            Copy-Item $appMsix.FullName -Destination $target -Force
+            $depMsix = Get-ChildItem $appPkgRoot -Filter *.msix -Recurse -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -match '^Microsoft' -and $_.DirectoryName -match '\\Dependencies\\x64$' } | Select-Object -First 1
+            if ($depMsix) { Write-Host "dep(x64): $($depMsix.FullName)"; Copy-Item $depMsix.FullName -Destination $target -Force }
+            else { Write-Warning '没找到 Dependencies\x64 下的依赖包，跳过' }
             Copy-Item "src/Desktop/BiliCopilot.UI/${{ env.CERT_CER }}" -Destination $target -Force
             Copy-Item 'scripts/Install.ps1' -Destination $target -Force
             if (Test-Path 'docs/sideload-guide.txt') { Copy-Item 'docs/sideload-guide.txt' -Destination (Join-Path $target '安装说明.txt') -Force }
@@ -184,6 +195,7 @@ jobs:
             gh release delete $tag --yes --cleanup-tag
           }
           gh release create $tag `
+            --target "${{ github.sha }}" `
             (Get-ChildItem "${{ github.workspace }}/FinalPackages" -File | ForEach-Object { $_.FullName }) `
             --title "Focus ${{ steps.ver.outputs.version }} (Win x64 sideload)" `
             --notes "自动构建的 x64 侧载包（去推荐化分支 focus/derec）。安装：以管理员运行包内 Install.ps1（先导入 focus-sideload.cer，再装 msix）。" `
@@ -198,6 +210,28 @@ jobs:
           name: BiliCopilot-Focus-${{ steps.ver.outputs.version }}-x64
           path: ${{ github.workspace }}/FinalPackages/*
           if-no-files-found: error
+
+      - name: Verify released asset (download back, compare sha256)
+        if: success()
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $diag = Join-Path $env:RUNNER_TEMP 'diag.log'
+          $zip = Get-ChildItem "${{ github.workspace }}/FinalPackages" -Filter *.zip | Select-Object -First 1
+          if (-not $zip) { Write-Warning '没有 zip 可比对'; exit 0 }
+          $local = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash
+          $dir = Join-Path $env:RUNNER_TEMP 'redownload'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          gh release download "focus-${{ steps.ver.outputs.version }}" --pattern $zip.Name --dir $dir --clobber
+          if ($LASTEXITCODE -ne 0) { throw "从 release 回拉 $($zip.Name) 失败" }
+          $remote = (Get-FileHash (Join-Path $dir $zip.Name) -Algorithm SHA256).Hash
+          "== 回拉验收 ==" | Tee-Object -FilePath $diag -Append
+          "local  sha256 = $local" | Tee-Object -FilePath $diag -Append
+          "remote sha256 = $remote" | Tee-Object -FilePath $diag -Append
+          if ($local -ne $remote) { throw '回拉的资产与本地产出 sha256 不一致' }
+          Write-Host '发布资产 sha256 一致' | Tee-Object -FilePath $diag -Append
 
       # 无论成败都把报告推回 ci/logs：这是无 API token 时唯一能读到构建日志的通道
       - name: Push build report to ci/logs
