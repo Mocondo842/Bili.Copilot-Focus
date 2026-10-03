@@ -122,24 +122,23 @@ jobs:
           if ($code -ne 0) { throw "msbuild 失败，退出码 $code（日志见 ci/logs 分支的 last-build.md）" }
 
       - name: Verify package signature
+        timeout-minutes: 5
         shell: pwsh
         run: |
           $msix = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Filter *.msix -Recurse | Select-Object -First 1
           if (-not $msix) { throw '没有找到 .msix' }
           $diag = Join-Path $env:RUNNER_TEMP 'diag.log'
           "== verify $($msix.Name) ==" | Tee-Object -FilePath $diag -Append
-          $imported = $true
-          try {
-            Import-Certificate -FilePath "src/Desktop/BiliCopilot.UI/${{ env.CERT_CER }}" -CertStoreLocation Cert:\CurrentUser\Root -ErrorAction Stop | Out-Null
-          } catch {
-            $imported = $false
-            Write-Warning "导入证书到 CurrentUser\Root 失败：$_（跳过信任链校验，仅确认签名存在）"
-          }
+          # 用 certutil 而不是 Import-Certificate：后者往 Root 存储写入时会弹确认框，
+          # 无人应答就永久阻塞（run #6 在这里挂了 30 分钟以上，直到任务超时）。
+          certutil -f -user -addstore Root "src/Desktop/BiliCopilot.UI/${{ env.CERT_CER }}" 2>&1 | Tee-Object -FilePath $diag -Append
+          $imported = ($LASTEXITCODE -eq 0)
+          if (-not $imported) { Write-Warning '证书导入当前用户根存储失败：跳过信任链校验，仅确认签名存在' }
           $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object FullName -Descending | Select-Object -First 1
           & $signtool.FullName verify /pa /v $msix.FullName 2>&1 | Tee-Object -FilePath $diag -Append
           $vc = $LASTEXITCODE
           if ($vc -ne 0 -and $imported) { throw "签名校验失败（signtool 退出码 $vc）" }
-          if ($vc -ne 0) { Write-Warning "signtool 退出码 $vc（证书未能导入信任链，仅记录）" }
+          if ($vc -ne 0) { Write-Warning "signtool 退出码 $vc（证书未进信任链，仅记录）" }
 
       - name: Collect packages
         if: success()
