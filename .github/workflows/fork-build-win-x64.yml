@@ -171,6 +171,9 @@ jobs:
             Copy-Item 'scripts/Install.ps1' -Destination $target -Force
             if (Test-Path 'docs/sideload-guide.txt') { Copy-Item 'docs/sideload-guide.txt' -Destination (Join-Path $target '安装说明.txt') -Force }
             if (-not (Get-ChildItem $target -Filter *.msix)) { throw '没有生成 .msix' }
+            # 打一个 zip 方便一次下载；排除 zip 自身
+            $zip = Join-Path $target "BiliCopilot-Focus_${{ steps.ver.outputs.version }}_x64.zip"
+            Compress-Archive -Path (Get-ChildItem $target -File | Where-Object { $_.Extension -ne '.zip' }).FullName -DestinationPath $zip -Force
             Write-Host '--- FinalPackages ---'
             Get-ChildItem $target | Select-Object Name, Length | Format-Table | Out-String | Write-Host
           } catch {
