@@ -25,9 +25,14 @@ if (-not (Test-Path 'src/Desktop/BiliCopilot.UI/Toolkits/DeRecommendToolkit.cs')
 Check '!DeRecommendToolkit.Disabled && _view.Recommends is not null' 1 'G1 播放页推荐区块守卫'
 Check 'DeRecommendToolkit.Disabled || HotSearchItems.Count > 0' 1 'G2 热搜请求守卫'
 Check '!DeRecommendToolkit.IsEmptyMoment(p)' 4 'G3 动态空条目过滤（4 处）'
+Check '!DeRecommendToolkit.IsHiddenPage(typeof(TPage))' 1 'G5 导航项强制隐藏（不读设置）'
+Check 'DeRecommendToolkit.Disabled || !isRecommendEnabled' 1 'G7 搜索推荐词强制不请求'
+Check 'Players.Any(p => p.Window is not null)' 1 'F1 关窗规则（仅独立播放器窗口时收托盘）'
+Check 'SettingNames.PlayWithoutP2P, true' 2 'F4 默认避开 PCDN 节点（两个 resolver）'
+Check 'AppWindow.Show();' 2 'F3 单实例/托盘唤回窗口'
 
 if ($fail -eq 0) {
-    Write-Host 'fork_check: OK (5/5 anchors)'
+    Write-Host 'fork_check: OK (all anchors present)'
     Write-Host '提醒：运行时设置配方见 FORK.md（侧边导航栏设置里关掉 6 个推流页，只留「动态」）。'
 }
 else {

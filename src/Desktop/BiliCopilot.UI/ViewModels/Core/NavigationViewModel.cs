@@ -264,7 +264,9 @@ public sealed partial class NavigationViewModel : ViewModelBase, INavServiceView
     private AppNavigationItemViewModel GetItem<TPage>(StringNames title, FluentIcons.Common.Symbol symbol, bool isSelected = false)
         where TPage : Page
     {
-        var isVisible = this.Get<ISettingsToolkit>().ReadLocalSetting($"Is{typeof(TPage).Name}Visible", true);
+        // fork：去推荐化屏蔽的页面一律不可见，且不读设置——否则改设置就能把推流页放回来。
+        var isVisible = !DeRecommendToolkit.IsHiddenPage(typeof(TPage))
+            && this.Get<ISettingsToolkit>().ReadLocalSetting($"Is{typeof(TPage).Name}Visible", true);
         return new AppNavigationItemViewModel(this, typeof(TPage), ResourceToolkit.GetLocalizedString(title), symbol, isSelected, isVisible: isVisible);
     }
 

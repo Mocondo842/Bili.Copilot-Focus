@@ -80,7 +80,18 @@ public partial class App : Application
 
     private void OnInstanceActivated(object? sender, AppActivationArguments e)
     {
-        _dispatcherQueue.TryEnqueue(() => GetMainWindow()?.Activate());
+        _dispatcherQueue.TryEnqueue(() =>
+        {
+            var window = GetMainWindow();
+            if (window is null)
+            {
+                return;
+            }
+
+            // fork：主窗口可能被收在托盘里（HideAllWindows），只 Activate 不够，先显示。
+            window.AppWindow.Show();
+            window.Activate();
+        });
     }
 
     private void InitializeTrayIcon()
@@ -115,6 +126,8 @@ public partial class App : Application
         _notificationManager?.Unregister();
         _notificationManager = null;
         Exit();
+        // fork：Exit() 之后 mpv/托盘/原生线程仍可能让进程存活，这里补一刀确保真的退出。
+        Environment.Exit(0);
     }
 
     private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
@@ -159,5 +172,15 @@ public partial class App : Application
         => ExitApp();
 
     private void OnShowHideWindowCommandExecuteRequested(XamlUICommand sender, ExecuteRequestedEventArgs args)
-        => GetMainWindow()?.Activate();
+    {
+        // fork：托盘图标点一下要能把藏在托盘里的窗口叫回来。
+        var window = GetMainWindow();
+        if (window is null)
+        {
+            return;
+        }
+
+        window.AppWindow.Show();
+        window.Activate();
+    }
 }

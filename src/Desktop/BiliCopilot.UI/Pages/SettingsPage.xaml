@@ -62,9 +62,9 @@
                 <settings:ThemeSettingControl />
                 <settings:LayoutSettingSection />
                 <settings:CacheSettingControl />
-                <settings:NavigationSettingControl />
+                <!-- fork：去推荐化——导航可见性开关已从界面移除（推流页在代码里强制隐藏，改设置也放不回来） -->
                 <settings:ScrollSettingControl />
-                <settings:SearchRecommendSettingSection />
+                <!-- fork：去推荐化——搜索推荐开关已从界面移除（代码里强制不请求） -->
                 <!--<settings:CloseBehaviorSettingControl />-->
                 <settings:NotificationSettingControl />
                 <settings:LoggerSettingControl />

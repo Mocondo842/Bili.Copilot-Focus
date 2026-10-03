@@ -45,7 +45,8 @@ public sealed partial class SearchBoxViewModel : ViewModelBase
             if (string.IsNullOrEmpty(_extraRegionId))
             {
                 var isRecommendEnabled = SettingsToolkit.ReadLocalSetting(Models.Constants.SettingNames.ShowSearchRecommend, true);
-                if (!isRecommendEnabled)
+                // fork：去推荐化开启时，搜索推荐词一律不请求（不依赖设置值）。
+                if (DeRecommendToolkit.Disabled || !isRecommendEnabled)
                 {
                     _recommendItems.Clear();
                     Suggestion.Clear();

@@ -191,7 +191,8 @@ internal sealed partial class VideoMediaSourceResolver(IPlayerService playerServ
         var videoUrl = vSeg?.BaseUrl;
         var audioUrl = aSeg?.BaseUrl;
 
-        if (SettingsToolkit.ReadLocalSetting(SettingNames.PlayWithoutP2P, false))
+        // fork：默认避开 PCDN（mcdn/szbdyd）节点——这类节点打不开时表现为整段没声音或卡住。
+        if (SettingsToolkit.ReadLocalSetting(SettingNames.PlayWithoutP2P, true))
         {
             if (vSeg?.BackupUrls is not null)
             {

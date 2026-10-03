@@ -90,8 +90,10 @@ public sealed partial class MainWindow : WindowBase, ITipWindow
     {
         var appVM = this.Get<AppViewModel>();
         var windows = appVM.Windows;
-        var hasPlayer = appVM.Players.Count > 0;
-        if (hasPlayer)
+        // fork：只有在「还有独立播放器窗口在播放」时才把主窗口收进托盘；
+        // 其余情况关窗就是真退出——否则进程留在后台，再次启动又因单实例被重定向，表现为「点了没反应」。
+        var hasDetachedPlayer = appVM.Players.Any(p => p.Window is not null);
+        if (hasDetachedPlayer)
         {
             e.Handled = true;
             appVM.HideAllWindowsCommand.Execute(default);

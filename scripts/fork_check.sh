@@ -25,9 +25,14 @@ check() { # $1=锚点文本  $2=期望出现次数  $3=说明
 check "!DeRecommendToolkit.Disabled && _view.Recommends is not null" 1 "G1 播放页推荐区块守卫"
 check "DeRecommendToolkit.Disabled || HotSearchItems.Count > 0"      1 "G2 热搜请求守卫"
 check "!DeRecommendToolkit.IsEmptyMoment(p)"                         4 "G3 动态空条目过滤（4 处）"
+check "!DeRecommendToolkit.IsHiddenPage(typeof(TPage))"              1 "G5 导航项强制隐藏（不读设置）"
+check "DeRecommendToolkit.Disabled || !isRecommendEnabled"           1 "G7 搜索推荐词强制不请求"
+check "Players.Any(p => p.Window is not null)"                       1 "F1 关窗规则（仅独立播放器窗口时收托盘）"
+check "SettingNames.PlayWithoutP2P, true"                            2 "F4 默认避开 PCDN 节点（两个 resolver）"
+check "AppWindow.Show();"                                            2 "F3 单实例/托盘唤回窗口"
 
 if [ "$fail" = 0 ]; then
-  echo "fork_check: OK (5/5 anchors)"
+  echo "fork_check: OK (all anchors present)"
   echo "提醒：运行时设置配方见 FORK.md（侧边导航栏设置里关掉 6 个推流页，只留「动态」）。"
 else
   echo "fork_check: FAILED —— 补丁可能在同步/合并中丢失，请按 FORK.md 的锚点重放 recipe 处理。"

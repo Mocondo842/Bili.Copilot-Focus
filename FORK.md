@@ -14,7 +14,7 @@
 | `master` | 上游镜像，只用于同步 | **不在 master 上提交**；用 GitHub 的「Sync fork」把它对齐上游 |
 | `focus/derec` | 去推荐化补丁分支（本分支） | 上面的补丁只在这里提交；每次同步后 `master` 合进本分支 |
 
-## 补丁清单（5 文件 / +36 −6）
+## 补丁清单（相对上游：19 files changed, 635 insertions(+), 17 deletions(-)）
 
 | 编号 | 文件 | 改动 |
 |---|---|---|
@@ -22,26 +22,38 @@
 | G1 | `.../ViewModels/Core/VideoConnectorViewModel/VideoConnectorViewModel.Methods.cs` | 播放页不再把「推荐」区块加进 sections（1 行） |
 | G2 | `.../ViewModels/Components/SearchBoxViewModel/SearchBoxViewModel.cs` | 热搜请求在发起前就被拦掉（1 行） |
 | G3 | `.../ViewModels/Items/MomentUperSectionViewModel/MomentUperSectionViewModel.cs`（3 处）与 `.../VideoMomentSectionDetailViewModel/VideoMomentSectionDetailViewModel.cs`（1 处） | 动态流丢弃「无内容」注入条目（4 处 `.Where`） |
+| G5 | `.../ViewModels/Core/NavigationViewModel.cs` | 被屏蔽的 6 个推流页**强制不可见**：`GetItem` 不再读 `Is{Page}Visible` 设置（1 行） |
+| G6 | `.../Pages/SettingsPage.xaml` | 移除「侧边导航栏设置」「搜索推荐」两个设置卡片（2 行改成注释），控件与设置项本身都保留 |
+| G7 | `.../ViewModels/Components/SearchBoxViewModel/SearchBoxViewModel.cs` | 搜索推荐词在去推荐化下**一律不请求**，与设置值无关（1 行） |
 
 `DeRecommendToolkit.IsEmptyMoment()` 的三条判据必须同时成立才丢：`MomentType is null or Unsupported`、`Data is null`、`Description is null`。这样纯文本动态（带 Description）不会被误伤——只按 `Data is null` 过滤会连纯文本一起丢。
 
-## 运行时设置配方（零代码的那一半，必须在应用里手动做一次）
+## 去推荐化是强制的，不需要手动关设置
 
-11 个官方推流面里，**6 个整页级推流面根本不需要改代码**——上游自带开关：
+早期版本要求你进设置里手动关掉 6 个推流页；现在**改设置也放不回来**：
 
-1. 设置 →「侧边导航栏设置」，把 **流行 / 视频 / 直播 / 番剧 / 影视 / 专栏** 全部关掉，**只留「动态」**；
-2. 顺手把「搜索推荐」（`ShowSearchRecommend`）也关掉，搜索框空输入时就不会再列推荐词。
+- 6 个整页级推流面在 `NavigationViewModel.GetItem` 里被强制隐藏（不读 `Is{Page}Visible`）；
+- 「侧边导航栏设置」与「搜索推荐」两张设置卡片已从设置界面移除（`Pages/SettingsPage.xaml`），控件与设置项本身都还在仓库里，只是没入口；
+- 搜索推荐词、热搜榜都被代码拦在请求之前；
+- 「播放完自动播放推荐视频」即使被打开也无效果——推荐区块已不再加入播放页。
 
-关掉导航项之后那些页面不会被构造，对应的 ViewModel 也就不会被解析，接口自然不发请求（落地页会自动回落到第一个可见项＝动态）。
+## 另外修掉的四个问题（都不属于上游行为，是本 fork 的增量）
 
-> 这些开关存在应用的 LocalSettings 里，**卸载重装会丢**，重装后照上面再关一次即可（约 30 秒）。
+| 编号 | 问题 | 改动 |
+|---|---|---|
+| F1 | 关掉主窗口后进程留在后台（托盘），再次启动因单实例被重定向而「点了没反应」，只能去任务管理器强杀 | `MainWindow.OnClosed`：只有「还有独立播放器窗口在播放」时才收进托盘，其余情况关窗就是真退出 |
+| F2 | 托盘菜单「退出」不保证进程结束 | `App.ExitApp()` 结尾补 `Environment.Exit(0)` |
+| F3 | 托盘图标点一下 / 二次启动唤不回藏在托盘里的窗口 | `App.xaml.cs` 两处改成 `AppWindow.Show()` + `Activate()` |
+| F4 | 视频偶发「没声音，退出重进才好」：日志里是可播放地址打不开（`mcdn.bilivideo.cn` 这类 PCDN 节点） | 「不使用 P2P」默认改为开（两个 resolver + 设置项默认值），流地址优先选非 PCDN 节点；想改回来在播放器设置里关掉即可 |
+
+> `AUDCLNT_E_DEVICE_INVALIDATED` 是 WASAPI 音频端点被系统回收（切设备/蓝牙断开/休眠）时报的错，音频输出重建由 libmpv 的 wasapi AO 负责，不在应用层；这块没动。F4 针对的是同一条日志里那串音频流地址打开失败的报错。
 
 ## 自动构建（GitHub Actions，x64 侧载包）
 
 `.github/workflows/fork-build-win-x64.yml`（只在 focus/derec 存在）在 GitHub 托管的 `windows-latest` 上打包：
 
 - 触发：推送到 focus/derec（`src/**`、`scripts/**` 或该 workflow 本身有改动时）；也支持手填版本号的手动触发。
-- 产物：`BiliCopilot.UI_<版本>_x64.msix` + `focus-sideload.cer` + `Install.ps1` + `安装说明.txt`，打成 zip 后同时进 **Actions artifact** 和 **`focus-<版本>` 预发布**（同名 tag 会先删后建）。默认版本 `2.2511.2.900`。
+- 产物：`BiliCopilot.UI_<版本>_x64.msix` + `focus-sideload.cer` + `Install.ps1` + `安装说明.txt`，打成 zip 后同时进 **Actions artifact** 和 **`focus-<版本>` 预发布**（同名 tag 会先删后建）。默认版本见 workflow 的 `DEFAULT_VERSION`（每次改动都要上抬，否则 `Add-AppxPackage` 不会覆盖安装已装的旧版本）。
 - 自检：构建前跑 `scripts/fork_check.ps1` 锚点守卫；构建后跑 `signtool verify /pa`；`APPX0105/APPX0107`（签名相关告警）被升级为错误——**签名没成功就构建失败**，不会又产出一个装不上的包。
 - 构建报告：无论成败都推到 `ci/logs` 分支的 `ci/last-build.md`（含 job 状态、产物清单、诊断与日志尾部），这是没有 API token 时也能读到 CI 日志的通道。
 

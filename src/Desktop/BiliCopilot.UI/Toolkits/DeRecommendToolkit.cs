@@ -17,6 +17,28 @@ internal static class DeRecommendToolkit
     internal static bool Disabled => true;
 
     /// <summary>
+    /// 被强制隐藏的整页级推流面。与设置无关：即便本地设置写成可见，也不放出来，
+    /// 避免「改一下设置就能把推荐流放回来」。
+    /// </summary>
+    private static readonly HashSet<string> HiddenPageNames = new(StringComparer.Ordinal)
+    {
+        "PopularPage",
+        "VideoPartitionPage",
+        "LivePartitionPage",
+        "AnimePage",
+        "CinemaPage",
+        "ArticlePartitionPage",
+    };
+
+    /// <summary>
+    /// 判断某个页面是否属于被强制隐藏的推流面。
+    /// </summary>
+    /// <param name="pageType">页面类型.</param>
+    /// <returns>是否应隐藏.</returns>
+    internal static bool IsHiddenPage(Type pageType)
+        => HiddenPageNames.Contains(pageType.Name);
+
+    /// <summary>
     /// 判断一条动态是否为「没有任何可展示内容」的条目。
     /// 上游内核把未知动态类型映射为 <see cref="MomentItemType.Unsupported"/> 且内容为 null，
     /// 这类条目在界面上只会留下一个「不受支持的内容」占位块；纯文本动态带 Description，不受影响。

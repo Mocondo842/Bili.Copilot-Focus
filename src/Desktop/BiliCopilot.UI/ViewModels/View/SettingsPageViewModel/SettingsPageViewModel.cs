@@ -49,7 +49,7 @@ public sealed partial class SettingsPageViewModel : AISettingsViewModelBase
         HideWhenCloseWindow = SettingsToolkit.ReadLocalSetting(SettingNames.HideWhenCloseWindow, false);
         IsNotificationEnabled = SettingsToolkit.ReadLocalSetting(SettingNames.IsNotificationEnabled, true);
         IsVideoMomentNotificationEnabled = SettingsToolkit.ReadLocalSetting(SettingNames.IsVideoMomentNotificationEnabled, true);
-        NoP2P = SettingsToolkit.ReadLocalSetting(SettingNames.PlayWithoutP2P, false);
+        NoP2P = SettingsToolkit.ReadLocalSetting(SettingNames.PlayWithoutP2P, true);   // fork：默认开（避开 PCDN）
         PlayerDisplayModeCollection = Enum.GetValues<PlayerDisplayMode>().ToList();
         PreferCodecCollection = Enum.GetValues<PreferCodecType>().ToList();
         PreferQualityCollection = Enum.GetValues<PreferQualityType>().ToList();
