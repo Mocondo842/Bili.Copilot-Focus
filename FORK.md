@@ -38,17 +38,21 @@
 
 ## 同步上游（每次上游更新后）
 
+先在 GitHub 仓库页面点一次「Sync fork」，让 fork 的 `master` 对齐上游（fork 无法直接用 SSH 拉上游：deploy key 只授权本仓库）。然后一条命令：
+
 ```bash
-# 1) 先在 GitHub 仓库页面点「Sync fork」（把 master 对齐上游）
-# 2) 本地合并
+bash scripts/focus_sync.sh
+```
+
+它做四件事：`fetch origin` → 快进 `master`（`--ff-only`，所以 master 上永远不会出现本地提交）→ 把 `master` 合进 `focus/derec` → 跑锚点守卫，**只有守卫通过才推送**。任一步失败即中止。
+
+手动等价步骤：
+
+```bash
 git fetch origin
-git checkout focus/derec
-git merge origin/master
-
-# 3) 守卫自检（Windows 上用 .\scripts\fork_check.ps1）
-bash scripts/fork_check.sh        # 必须输出 fork_check: OK (5/5 anchors)
-
-# 4) 推送
+git checkout master && git merge --ff-only origin/master
+git checkout focus/derec && git merge --no-edit master
+bash scripts/fork_check.sh        # 必须输出 fork_check: OK (5/5 anchors)；Windows 上用 .\scripts\fork_check.ps1
 git push origin focus/derec
 ```
 
