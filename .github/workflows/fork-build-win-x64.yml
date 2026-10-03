@@ -2,9 +2,11 @@ name: Fork Build (Win x64 sideload)
 
 # fork 专用：在 GitHub 托管的 Windows runner 上打包 x64 侧载包。
 # 与上游 self-hosted 的 build-sideload.yml 的区别：
-#   1) runs-on: windows-latest（不再依赖自建 runner，也不再要求 actor == Richasy）
-#   2) 不发布正式 Release，只传 artifact + 建一个 focus-* 预发布
-#   3) 无论成败都把构建报告推回 ci/logs 分支（供无 API token 的自监督读取）
+#   1) runs-on: windows-latest（不依赖自建 runner，也不要求 actor == Richasy）
+#   2) 签名证书在 CI 内现场生成（上游那把 BiliCopilot.UI_TemporaryKey.pfx 已于 2026-09-28 过期），
+#      仓库里不放任何私钥
+#   3) 不发布正式 Release，只传 artifact + 建一个 focus-* 预发布
+#   4) 无论成败都把构建报告推回 ci/logs 分支（无 API token 时的自监督日志通道）
 # 本文件只在 focus/derec 分支存在，master 仍是纯上游镜像。
 
 on:
@@ -24,9 +26,14 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: fork-build-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   DEFAULT_VERSION: '2.2511.2.900'
   REPORT_BRANCH: 'ci/logs'
+  CERT_PASSWORD: 'focus-sideload'
 
 jobs:
   build:
@@ -43,14 +50,16 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "== runner =="
-          Get-ComputerInfo -Property WindowsProductName, WindowsVersion, OsHardwareAbstractionLayer | Format-List
+          Get-ComputerInfo -Property WindowsProductName, WindowsVersion | Format-List
           Write-Host "== toolchain =="
           dotnet --version
           Write-Host "gh: $(gh --version | Select-Object -First 1)"
           Write-Host "7z: $((Get-Command 7z.exe).Source)"
           Write-Host "msbuild: $((Get-Command msbuild.exe).Source)"
-          Write-Host "== token 写权限探测（决定后面报告能否推回）=="
-          Write-Host "GITHUB_TOKEN present: $([bool]'${{ secrets.GITHUB_TOKEN }}')"
+
+      - name: Guard (patch anchors)
+        shell: pwsh
+        run: pwsh -File scripts/fork_check.ps1
 
       - name: Resolve version
         id: ver
@@ -74,6 +83,25 @@ jobs:
           manifest-path: src/Desktop/BiliCopilot.UI/Package.appxmanifest
           gh-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate signing certificate
+        id: cert
+        shell: pwsh
+        run: |
+          $pfx = Join-Path $env:GITHUB_WORKSPACE 'focus-temp.pfx'
+          $cert = New-SelfSignedCertificate `
+            -Type Custom `
+            -Subject 'CN=Richasy' `
+            -KeyUsage DigitalSignature `
+            -KeyAlgorithm RSA -KeyLength 2048 `
+            -CertStoreLocation 'Cert:\CurrentUser\My' `
+            -NotAfter (Get-Date).AddYears(3) `
+            -TextExtension @('2.5.29.37={text}1.3.6.1.5.5.7.3.3', '2.5.29.19={text}')
+          Export-PfxCertificate -Cert $cert -FilePath $pfx `
+            -Password (ConvertTo-SecureString -String "${{ env.CERT_PASSWORD }}" -Force -AsPlainText) | Out-Null
+          Write-Host "subject=$($cert.Subject) thumbprint=$($cert.Thumbprint) notAfter=$($cert.NotAfter)"
+          "thumbprint=$($cert.Thumbprint)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "pfx=$pfx" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
       - name: Build x64 sideload package
         id: build
         shell: pwsh
@@ -89,7 +117,8 @@ jobs:
             /p:AppxBundle=Never `
             /p:GenerateAppxPackageOnBuild=true `
             /p:AppxPackageSigningEnabled=true `
-            /p:PackageCertificateKeyFile="BiliCopilot.UI_TemporaryKey.pfx" `
+            /p:PackageCertificateKeyFile="${{ steps.cert.outputs.pfx }}" `
+            /p:PackageCertificatePassword="${{ env.CERT_PASSWORD }}" `
             /p:AppxPackageDir="${{ github.workspace }}\AppPackages\" `
             /m /v:minimal 2>&1 | Tee-Object -FilePath $log
           $code = $LASTEXITCODE
@@ -102,11 +131,13 @@ jobs:
         run: |
           $target = Join-Path $env:GITHUB_WORKSPACE 'FinalPackages'
           New-Item -ItemType Directory -Force -Path $target | Out-Null
-          $files = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Include *.msix, *.cer -Recurse
-          if (-not $files) { throw 'AppPackages 下没有找到 .msix/.cer' }
-          $files | ForEach-Object { Write-Host "copy $($_.Name)"; Copy-Item $_.FullName -Destination $target -Force }
+          $files = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Include *.msix, *.cer -Recurse -ErrorAction SilentlyContinue
+          if ($files) { $files | ForEach-Object { Write-Host "copy $($_.Name)"; Copy-Item $_.FullName -Destination $target -Force } }
+          $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Thumbprint -eq '${{ steps.cert.outputs.thumbprint }}' }
+          if ($cert) { Export-Certificate -Cert $cert -FilePath (Join-Path $target 'focus-temp.cer') | Out-Null }
           Copy-Item 'scripts/Install.ps1' -Destination $target -Force
           if (Test-Path 'docs/sideload-guide.txt') { Copy-Item 'docs/sideload-guide.txt' -Destination (Join-Path $target '安装说明.txt') -Force }
+          if (-not (Get-ChildItem $target -Filter *.msix)) { throw '没有生成 .msix' }
           $zip = Join-Path $target "BiliCopilot-Focus_${{ steps.ver.outputs.version }}_x64.zip"
           Compress-Archive -Path (Get-ChildItem $target -File | Where-Object { $_.Extension -ne '.zip' }).FullName -DestinationPath $zip -Force
           Get-ChildItem $target | Select-Object Name, Length | Format-Table
@@ -127,7 +158,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $tag = "focus-${{ steps.ver.outputs.version }}"
-          if (gh release view $tag 2>$null) { Write-Host "release $tag 已存在"; exit 0 }
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) { Write-Host "release $tag 已存在，跳过"; exit 0 }
           gh release create $tag `
             (Get-ChildItem "${{ github.workspace }}/FinalPackages" -File | ForEach-Object { $_.FullName }) `
             --title "Focus ${{ steps.ver.outputs.version }} (Win x64 sideload)" `
