@@ -136,15 +136,13 @@ jobs:
           try { $sig = $zip.Entries | Where-Object { $_.FullName -eq 'AppxSignature.p7x' } } finally { $zip.Dispose() }
           if (-not $sig) { throw 'msix 内没有 AppxSignature.p7x：包未签名（无法安装）' }
           "AppxSignature.p7x = present, $($sig.Length) bytes" | Tee-Object -FilePath $diag -Append
-          # 参考信息：signtool 的信任链校验。自签名证书在干净 runner 上通常建不出受信任链，
-          # 因此只记录、不作为失败依据（run #7 实测：签名正常但 /pa 校验因信任链失败）。
-          certutil -f -user -addstore Root "src/Desktop/BiliCopilot.UI/${{ env.CERT_CER }}" 2>&1 | Tee-Object -FilePath $diag -Append
+          # 参考信息：signtool 的信任链校验。自签名证书在干净 runner 上建不出受信任链，
+          # 只记录、不作为失败依据。
+          # 严禁用 certutil/Import-Certificate 把证书导入 Root 存储：那会弹系统确认框、
+          # 无人应答就永久阻塞（run #7 挂 30 分钟，run #8/#9/#10 被步骤超时 5 分钟砍掉）。
           $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object FullName -Descending | Select-Object -First 1
           & $signtool.FullName verify /pa /v $msix.FullName 2>&1 | Tee-Object -FilePath $diag -Append
-          if ($LASTEXITCODE -ne 0) { Write-Warning 'signtool 信任链校验未通过（自签名场景常见）：仅记录' } else { Write-Host 'signtool: 信任链校验通过' }
-          # 必须显式归零：runner 会在脚本末尾追加 `exit $LASTEXITCODE`，
-          # 而上面 signtool 的信任链失败会把 $LASTEXITCODE 留成非零，
-          # 于是「只记录不失败」的告警被 runner 判成步骤失败（run #8/#9 实测）。
+          if ($LASTEXITCODE -ne 0) { Write-Warning 'signtool 信任链校验未通过（自签名场景常见，安装端由 Install.ps1 导入证书）：仅记录' } else { Write-Host 'signtool: 信任链校验通过' }
           exit 0
 
       - name: Collect packages
