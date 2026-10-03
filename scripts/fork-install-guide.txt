@@ -24,12 +24,12 @@
 ------------------------------------
   先进入包所在目录，再执行（注意 -File 后面是脚本路径；不在该目录时必须写完整路径）：
 
-    cd C:\Users\你\Downloads\BiliCopilot-Focus_2.2511.2.903_x64
+    cd C:\Users\你\Downloads\BiliCopilot-Focus_<版本>_x64
     powershell -NoProfile -ExecutionPolicy Bypass -File .\Install-Focus.ps1
 
   或者一条命令给完整路径：
 
-    powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\你\Downloads\BiliCopilot-Focus_2.2511.2.903_x64\Install-Focus.ps1"
+    powershell -NoProfile -ExecutionPolicy Bypass -File "C:\Users\你\Downloads\BiliCopilot-Focus_<版本>_x64\Install-Focus.ps1"
 
 方式三：手动安装（不用脚本）
 ----------------------------
