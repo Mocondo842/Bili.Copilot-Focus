@@ -147,25 +147,25 @@ jobs:
         if: success()
         shell: pwsh
         run: |
-          $target = Join-Path $env:GITHUB_WORKSPACE 'FinalPackages'
-          New-Item -ItemType Directory -Force -Path $target | Out-Null
-          Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Include *.msix -Recurse -ErrorAction SilentlyContinue |
-            ForEach-Object { Write-Host "copy $($_.Name)"; Copy-Item $_.FullName -Destination $target -Force }
-          Copy-Item "src/Desktop/BiliCopilot.UI/${{ env.CERT_CER }}" -Destination $target -Force
-          Copy-Item 'scripts/Install.ps1' -Destination $target -Force
-          if (Test-Path 'docs/sideload-guide.txt') { Copy-Item 'docs/sideload-guide.txt' -Destination (Join-Path $target '安装说明.txt') -Force }
-          if (-not (Get-ChildItem $target -Filter *.msix)) { throw '没有生成 .msix' }
-          $zip = Join-Path $target "BiliCopilot-Focus_${{ steps.ver.outputs.version }}_x64.zip"
-          Compress-Archive -Path (Get-ChildItem $target -File | Where-Object { $_.Extension -ne '.zip' }).FullName -DestinationPath $zip -Force
-          Get-ChildItem $target | Select-Object Name, Length | Format-Table
-
-      - name: Upload artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: BiliCopilot-Focus-${{ steps.ver.outputs.version }}-x64
-          path: ${{ github.workspace }}/FinalPackages/*
-          if-no-files-found: error
+          $tlog = Join-Path $env:RUNNER_TEMP 'collect.log'
+          Start-Transcript -Path $tlog -Force | Out-Null
+          try {
+            $target = Join-Path $env:GITHUB_WORKSPACE 'FinalPackages'
+            New-Item -ItemType Directory -Force -Path $target | Out-Null
+            Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Include *.msix -Recurse -ErrorAction SilentlyContinue |
+              ForEach-Object { Write-Host "copy $($_.FullName)"; Copy-Item $_.FullName -Destination $target -Force }
+            Copy-Item "src/Desktop/BiliCopilot.UI/${{ env.CERT_CER }}" -Destination $target -Force
+            Copy-Item 'scripts/Install.ps1' -Destination $target -Force
+            if (Test-Path 'docs/sideload-guide.txt') { Copy-Item 'docs/sideload-guide.txt' -Destination (Join-Path $target '安装说明.txt') -Force }
+            if (-not (Get-ChildItem $target -Filter *.msix)) { throw '没有生成 .msix' }
+            Write-Host '--- FinalPackages ---'
+            Get-ChildItem $target | Select-Object Name, Length | Format-Table | Out-String | Write-Host
+          } catch {
+            Write-Host "COLLECT-ERROR: $($_ | Out-String)"
+            throw
+          } finally {
+            Stop-Transcript | Out-Null
+          }
 
       - name: Publish fork prerelease
         if: success()
@@ -174,6 +174,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          Start-Transcript -Path (Join-Path $env:RUNNER_TEMP 'release.log') -Force | Out-Null
           $tag = "focus-${{ steps.ver.outputs.version }}"
           gh release view $tag --json tagName 2>$null | Out-Null
           if ($LASTEXITCODE -eq 0) {
@@ -185,6 +186,16 @@ jobs:
             --title "Focus ${{ steps.ver.outputs.version }} (Win x64 sideload)" `
             --notes "自动构建的 x64 侧载包（去推荐化分支 focus/derec）。安装：以管理员运行包内 Install.ps1（先导入 focus-sideload.cer，再装 msix）。" `
             --prerelease
+          Stop-Transcript | Out-Null
+
+      - name: Upload artifact
+        if: success()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: BiliCopilot-Focus-${{ steps.ver.outputs.version }}-x64
+          path: ${{ github.workspace }}/FinalPackages/*
+          if-no-files-found: error
 
       # 无论成败都把报告推回 ci/logs：这是无 API token 时唯一能读到构建日志的通道
       - name: Push build report to ci/logs
@@ -222,6 +233,22 @@ jobs:
             ""
             '```'
             ($(if (Test-Path $diag) { (Get-Content $diag | Select-Object -Last 150) -join "`n" } else { '(没有 diag.log：任务在到达这些步骤前就结束了)' }))
+            '```'
+            ""
+            "## collect / release transcript（各 60 行）"
+            ""
+            '```'
+            ($(if (Test-Path (Join-Path $env:RUNNER_TEMP 'collect.log')) { (Get-Content (Join-Path $env:RUNNER_TEMP 'collect.log') | Select-Object -Last 60) -join "`n" } else { '(没有 collect.log)' }))
+            '```'
+            ""
+            '```'
+            ($(if (Test-Path (Join-Path $env:RUNNER_TEMP 'release.log')) { (Get-Content (Join-Path $env:RUNNER_TEMP 'release.log') | Select-Object -Last 60) -join "`n" } else { '(没有 release.log)' }))
+            '```'
+            ""
+            "## FinalPackages 清单"
+            ""
+            '```'
+            ($(try { (Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'FinalPackages') -ErrorAction Stop | ForEach-Object { $_.Name + '  ' + [math]::Round($_.Length/1MB,1) + ' MB' }) -join "`n" } catch { '(列不出 FinalPackages)' }))
             '```'
             ""
             "## 构建日志尾部（250 行）"
