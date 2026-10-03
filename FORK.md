@@ -64,7 +64,21 @@
 包内另有 `安装说明.txt`（源文件 `scripts/fork-install-guide.txt`），写清了脚本用法、手动安装三步、
 以及「为什么必须信任这个证书，且信任一次之后升级不用再信任」。
 
-> 该脚本已过 `pwsh` 语法解析检查（容器里的 PowerShell），但**在真 Windows 上还没跑过**——待验证。
+真机反馈（2026-10-03 夜）与对应改法：
+
+- 右键「使用 PowerShell 运行」时**只弹一个安全警告，点开后窗口一闪消失**——执行策略/安全提示
+  在脚本拿到控制权之前就把它拦掉了，脚本内部再怎么写都没用。补了 **`Install-Focus.cmd`**：
+  显式 `-ExecutionPolicy Bypass`，命令结束后无条件 `pause`，所以窗口一定留得住。
+- 依赖包报「已安装更高版本 8000.879.2017.0」——系统里的 Windows App Runtime 比包里带的新。
+  安装器现在会**先从 msix 里读出 Identity（msix 就是 zip，读 AppxManifest.xml）并和
+  `Get-AppxPackage` 的已装版本比较**，已有更高/同版本就静默跳过；万一还是失败，也只提示
+  「系统里已有更高版本，不影响后面的安装」。
+- 提权交接用**退出码 2** 表示「已请求提权、安装在新窗口继续」，`Install-Focus.cmd` 据此给出
+  正确提示（而不是把它当成失败）。
+- 顶层加了 `try/catch`，任何意外都会打出来并停住窗口——**再也不会静默闪掉**。
+
+> `Install-Focus.ps1` 与 `.cmd` 都过了 `pwsh` 语法解析检查（容器里的 PowerShell），
+> 但**在真 Windows 上还没跑过**——待验证。
 
 ## 自动构建（GitHub Actions，x64 侧载包）
 

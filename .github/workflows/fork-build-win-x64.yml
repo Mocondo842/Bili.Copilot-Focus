@@ -32,7 +32,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEFAULT_VERSION: '2.2511.2.902'
+  DEFAULT_VERSION: '2.2511.2.903'
   REPORT_BRANCH: 'ci/logs'
   CERT_FILE: 'focus-sideload.pfx'
   CERT_CER: 'focus-sideload.cer'
@@ -171,6 +171,7 @@ jobs:
               # fork 自带安装器：非管理员时自动提权但**留住窗口**、证书用 certutil 静默导入、
             # 失败会把原因显示出来（上游 Install.ps1 非管理员分支会直接 exit，双击只看到闪一下）
             Copy-Item 'scripts/Install-Focus.ps1' -Destination $target -Force
+            Copy-Item 'scripts/Install-Focus.cmd' -Destination $target -Force
             Copy-Item 'scripts/fork-install-guide.txt' -Destination (Join-Path $target '安装说明.txt') -Force
             if (-not (Get-ChildItem $target -Filter *.msix)) { throw '没有生成 .msix' }
             # 打一个 zip 方便一次下载；排除 zip 自身
@@ -203,7 +204,7 @@ jobs:
             --target "${{ github.sha }}" `
             (Get-ChildItem "${{ github.workspace }}/FinalPackages" -File | ForEach-Object { $_.FullName }) `
             --title "Focus ${{ steps.ver.outputs.version }} (Win x64 sideload)" `
-            --notes "自动构建的 x64 侧载包（去推荐化分支 focus/derec）。安装：右键包内 Install-Focus.ps1 →「使用 PowerShell 运行」（会自动提权、信任证书、装依赖与主程序；详见包内安装说明.txt）。" `
+            --notes "自动构建的 x64 侧载包（去推荐化分支 focus/derec）。安装：双击包内 Install-Focus.cmd（自动提权、信任证书、装依赖与主程序；详见包内安装说明.txt）。" `
             --prerelease
           Stop-Transcript | Out-Null
 
