@@ -48,6 +48,24 @@
 
 > `AUDCLNT_E_DEVICE_INVALIDATED` 是 WASAPI 音频端点被系统回收（切设备/蓝牙断开/休眠）时报的错，音频输出重建由 libmpv 的 wasapi AO 负责，不在应用层；这块没动。F4 针对的是同一条日志里那串音频流地址打开失败的报错。
 
+## 安装器（fork 自带，替代上游 Install.ps1）
+
+上游 `scripts/Install.ps1` 在**非管理员**上下文里会 `Start-Process -Verb RunAs` 重启自身后立刻 `exit`，
+用户双击（右键 →「使用 PowerShell 运行」）只看到窗口闪一下；UAC 弹窗若被忽略/拒绝，就什么都不会发生。
+本 fork 另写了 `scripts/Install-Focus.ps1`（**新文件，不动上游那个**），交付 zip 里只放它：
+
+- 非管理员时请求提权，但**原窗口停下来**并提示「UAC 可能藏在别的窗口后面 / 改为右键以管理员身份运行」；
+- 提权后的窗口用 `-NoExit` 启动，装完或报错都停在那里（`ReadKey`，非交互会话退化为 `Start-Sleep`）；
+- 证书用 `certutil -f -addstore Root` **静默**导入（不弹确认框），失败只提示不吞掉；
+- 依赖按「文件名 `Microsoft*`」识别（沿用上游约定），主应用常规安装失败时自动 `-ForceUpdateFromAnyVersion` 重试；
+- 脚本目录用 `$PSScriptRoot` + 两级回退，不依赖 `$MyInvocation` 的写法；
+- 文件带 UTF-8 BOM（Windows PowerShell 5.1 才会正确显示中文）。
+
+包内另有 `安装说明.txt`（源文件 `scripts/fork-install-guide.txt`），写清了脚本用法、手动安装三步、
+以及「为什么必须信任这个证书，且信任一次之后升级不用再信任」。
+
+> 该脚本已过 `pwsh` 语法解析检查（容器里的 PowerShell），但**在真 Windows 上还没跑过**——待验证。
+
 ## 自动构建（GitHub Actions，x64 侧载包）
 
 `.github/workflows/fork-build-win-x64.yml`（只在 focus/derec 存在）在 GitHub 托管的 `windows-latest` 上打包：
