@@ -18,7 +18,7 @@
 
 | 编号 | 文件 | 改动 |
 |---|---|---|
-| G4 | `src/Desktop/BiliCopilot.UI/Toolkits/DeRecommendToolkit.cs`（**新增**，30 行） | 编译期开关 `Disabled` + `IsEmptyMoment()` 判据。放在 `BiliCopilot.UI.Toolkits` 命名空间，因为下面 4 个文件本来就 `using` 了它——**不新增任何 using 行** |
+| G4 | `src/Desktop/BiliCopilot.UI/Toolkits/DeRecommendToolkit.cs`（**新增**，31 行） | 开关 `Disabled`（`=> true`，改回 `false` 即可整体还原）+ `IsEmptyMoment()` 判据。放在 `BiliCopilot.UI.Toolkits` 命名空间，因为下面 4 个文件本来就 `using` 了它——**不新增任何 using 行** |
 | G1 | `.../ViewModels/Core/VideoConnectorViewModel/VideoConnectorViewModel.Methods.cs` | 播放页不再把「推荐」区块加进 sections（1 行） |
 | G2 | `.../ViewModels/Components/SearchBoxViewModel/SearchBoxViewModel.cs` | 热搜请求在发起前就被拦掉（1 行） |
 | G3 | `.../ViewModels/Items/MomentUperSectionViewModel/MomentUperSectionViewModel.cs`（3 处）与 `.../VideoMomentSectionDetailViewModel/VideoMomentSectionDetailViewModel.cs`（1 处） | 动态流丢弃「无内容」注入条目（4 处 `.Where`） |

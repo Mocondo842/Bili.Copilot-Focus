@@ -1,6 +1,7 @@
 // Copyright (c) Bili Copilot. All rights reserved.
 // 本文件由 fork 新增，不属于上游；见仓库根目录 FORK.md。
 
+using Richasy.BiliKernel.Models;
 using Richasy.BiliKernel.Models.Moment;
 
 namespace BiliCopilot.UI.Toolkits;
@@ -13,7 +14,7 @@ internal static class DeRecommendToolkit
     /// <summary>
     /// 是否屏蔽官方推流面。
     /// </summary>
-    internal const bool Disabled = true;
+    internal static bool Disabled => true;
 
     /// <summary>
     /// 判断一条动态是否为「没有任何可展示内容」的条目。
