@@ -142,6 +142,10 @@ jobs:
           $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' | Sort-Object FullName -Descending | Select-Object -First 1
           & $signtool.FullName verify /pa /v $msix.FullName 2>&1 | Tee-Object -FilePath $diag -Append
           if ($LASTEXITCODE -ne 0) { Write-Warning 'signtool 信任链校验未通过（自签名场景常见）：仅记录' } else { Write-Host 'signtool: 信任链校验通过' }
+          # 必须显式归零：runner 会在脚本末尾追加 `exit $LASTEXITCODE`，
+          # 而上面 signtool 的信任链失败会把 $LASTEXITCODE 留成非零，
+          # 于是「只记录不失败」的告警被 runner 判成步骤失败（run #8/#9 实测）。
+          exit 0
 
       - name: Collect packages
         if: success()
