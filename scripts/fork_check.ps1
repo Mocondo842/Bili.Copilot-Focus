@@ -33,7 +33,7 @@ Check 'AppWindow.Show();' 2 'F3 单实例/托盘唤回窗口'
 
 if ($fail -eq 0) {
     Write-Host 'fork_check: OK (all anchors present)'
-    Write-Host '提醒：运行时设置配方见 FORK.md（侧边导航栏设置里关掉 6 个推流页，只留「动态」）。'
+    Write-Host '提醒：去推荐化已在代码里强制（改设置也放不回来），详见 FORK.md。'
 }
 else {
     Write-Host 'fork_check: FAILED —— 补丁可能在同步/合并中丢失，请按 FORK.md 的锚点重放 recipe 处理。'
