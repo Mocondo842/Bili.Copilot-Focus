@@ -14,7 +14,7 @@
 | `master` | 上游镜像，只用于同步 | **不在 master 上提交**；用 GitHub 的「Sync fork」把它对齐上游 |
 | `focus/derec` | 去推荐化补丁分支（本分支） | 上面的补丁只在这里提交；每次同步后 `master` 合进本分支 |
 
-## 补丁清单（相对上游：19 files changed, 635 insertions(+), 17 deletions(-)）
+## 补丁清单（相对上游 master：`src/` 18 files changed, 793 insertions(+), 104 deletions(-)；含本 fork 自带的构建/安装脚本与文档共 27 files changed, 1756 insertions(+), 167 deletions(-)）
 
 | 编号 | 文件 | 改动 |
 |---|---|---|
