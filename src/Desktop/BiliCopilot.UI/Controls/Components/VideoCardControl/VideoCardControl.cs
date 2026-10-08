@@ -17,6 +17,8 @@ public sealed partial class VideoCardControl : LayoutControlBase<VideoItemViewMo
 {
     private ButtonBase _rootCard;
     private Button _userButton;
+    private ToggleButton _likeButton;
+    private Button _commentButton;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VideoCardControl"/> class.
@@ -28,6 +30,8 @@ public sealed partial class VideoCardControl : LayoutControlBase<VideoItemViewMo
     {
         _rootCard = GetTemplateChild("RootCard") as ButtonBase;
         _userButton = GetTemplateChild("UserButton") as Button;
+        _likeButton = GetTemplateChild("LikeButton") as ToggleButton;
+        _commentButton = GetTemplateChild("CommentButton") as Button;
         if (ViewModel is not null)
         {
             if (_rootCard is not null)
@@ -39,6 +43,22 @@ public sealed partial class VideoCardControl : LayoutControlBase<VideoItemViewMo
             {
                 _userButton.Command = ViewModel.ShowUserSpaceCommand;
             }
+
+            ApplyOperationCommands();
+        }
+    }
+
+    // 点赞 / 评论按钮的命令在代码里赋值：模板里的经典 Binding 取不到 [RelayCommand] 生成的命令属性.
+    private void ApplyOperationCommands()
+    {
+        if (_likeButton is not null)
+        {
+            _likeButton.Command = ViewModel?.ToggleLikeCommand;
+        }
+
+        if (_commentButton is not null)
+        {
+            _commentButton.Command = ViewModel?.ShowCommentCommand;
         }
     }
 
@@ -62,6 +82,8 @@ public sealed partial class VideoCardControl : LayoutControlBase<VideoItemViewMo
         {
             _userButton.Command = newValue?.ShowUserSpaceCommand;
         }
+
+        ApplyOperationCommands();
     }
 
     private static MenuFlyoutItem CreatePrivatePlayItem()

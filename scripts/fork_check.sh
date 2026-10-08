@@ -51,17 +51,23 @@ check "showCommentAction: _showCommentAction"                         2 "C2 搜�
 check "newSection.SetShowCommentAction(ShowComment)"                  1 "C3 搜索页把评论面板接到视频分区"
 check "showCommentAction: ShowVideoComment"                           1 "C4 用户空间视频搜索卡片带评论动作"
 check "Richasy.BiliKernel.Models.CommentTargetType.Video"             2 "C5 评论面板按视频初始化（搜索页 + 用户空间）"
-check "VideoExtensionDataId.Description)"                             1 "C6 视频卡片读简介扩展字段"
+check "GetVideoPageDetailAsync(new MediaIdentifier(Data.Identifier.Id" 1 "C6 简介按需取回（与播放页同一接口）"
+check "_descriptionTask ??= LoadDescriptionAsync();"                  1 "C7 简介取回任务单飞（并发点击只发一次）"
+check "_likeButton.Command = ViewModel?.ToggleLikeCommand;"           1 "C8 点赞命令在 code-behind 赋值"
+check "_commentButton.Command = ViewModel?.ShowCommentCommand;"       1 "C9 评论命令在 code-behind 赋值"
+check "ReferenceEquals(video, ViewModel)"                             1 "C10 取回后校验按钮是否已被列表回收"
+check "public VideoItemViewModel? InnerVideo"                         1 "C11 用户空间视频卡片复用内层视频取简介"
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 check 的搜索范围内，单独查）
 xcheck() { # $1=文件  $2=锚点文本  $3=说明
   grep -qF -- "$2" "$1" || { echo "MISSING ANCHOR: $3"; fail=1; }
 }
-xcheck src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml 'ViewModel.ToggleLikeCommand' "C7 搜索卡片点赞按钮"
-xcheck src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml '<local:DescriptionButton' "C8 搜索卡片简介按钮"
-xcheck src/Desktop/BiliCopilot.UI/Controls/Components/MomentCardControl/PersonalVideoMomentPresenter.xaml 'Symbol="Feed"' "C9 用户空间卡片简介按钮"
-xcheck src/Desktop/BiliCopilot.UI/Controls/Comment/CommentItemControl.xaml 'MaxLines="0"' "C10 评论不截断"
-xcheck src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml '<comment:CommentOverlayPanel' "C11 搜索页评论浮层"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml 'x:Name="LikeButton"' "C12 搜索卡片点赞按钮（供 code-behind 取）"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml 'x:Name="CommentButton"' "C13 搜索卡片评论按钮（供 code-behind 取）"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml '<local:DescriptionButton' "C14 搜索卡片简介按钮"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Components/MomentCardControl/PersonalVideoMomentPresenter.xaml 'ViewModel.InnerVideo' "C15 用户空间卡片简介按钮"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Comment/CommentItemControl.xaml 'MaxLines="0"' "C16 评论不截断"
+xcheck src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml '<comment:CommentOverlayPanel' "C17 搜索页评论浮层"
 
 # 快捷键设置控件必须挂在设置页上（XAML 不在 check 的搜索范围内，单独查）
 grep -qF '<settings:ShortcutSettingControl />' src/Desktop/BiliCopilot.UI/Pages/SettingsPage.xaml \
@@ -76,6 +82,13 @@ fi
 # 反向检查：ESC 不该再被「只在连接中/加载中才收全屏」的条件挡住（见 FORK.md F7）
 if grep -rF --include=*.cs -- '(IsConnecting || Player.IsLoading) && Window is not null' src >/dev/null 2>&1; then
   echo "UNEXPECTED: ESC 又被「连接中/加载中」的条件限制住了（见 FORK.md F7）"
+  fail=1
+fi
+
+# 反向检查：视频卡片模板里不应再出现「经典绑定到命令」（取不到 [RelayCommand] 生成的属性）
+if grep -rF --include=*.xaml 'Path=ViewModel.ToggleLikeCommand' src >/dev/null 2>&1 \
+   || grep -rF --include=*.xaml 'Path=ViewModel.ShowCommentCommand' src >/dev/null 2>&1; then
+  echo "UNEXPECTED: 卡片模板里又出现了经典绑定到命令（见 FORK.md C1）"
   fail=1
 fi
 

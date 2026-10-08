@@ -81,7 +81,8 @@ public sealed partial class VideoItemViewModel
     /// <summary>
     /// 视频简介.
     /// </summary>
-    public string? Description { get; init; }
+    [ObservableProperty]
+    public partial string? Description { get; set; }
 
     /// <summary>
     /// 标签名称.

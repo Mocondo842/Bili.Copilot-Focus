@@ -1,44 +1,43 @@
 ﻿// Copyright (c) Bili Copilot. All rights reserved.
 
+using BiliCopilot.UI.Models.Constants;
+using BiliCopilot.UI.Toolkits;
+using BiliCopilot.UI.ViewModels.Items;
 using Richasy.WinUIKernel.Share.Base;
 
 namespace BiliCopilot.UI.Controls.Components;
 
 /// <summary>
-/// 简介按钮，点击后在浮出层中显示完整简介。
+/// 简介按钮. 点击后立刻打开浮出层（取回期间显示等待文案），再按需向服务端取一次视频简介并回填.
+/// 弹层不依赖命令绑定——模板里的经典绑定取不到命令属性；浮层内容全部走代码.
 /// </summary>
-public sealed partial class DescriptionButton : LayoutUserControlBase
+public sealed partial class DescriptionButton : LayoutUserControlBase<VideoItemViewModel>
 {
-    /// <summary>
-    /// <see cref="Description"/> 的依赖属性.
-    /// </summary>
-    public static readonly DependencyProperty DescriptionProperty =
-        DependencyProperty.Register(nameof(Description), typeof(string), typeof(DescriptionButton), new PropertyMetadata(default, new PropertyChangedCallback(OnDescriptionChanged)));
-
     /// <summary>
     /// Initializes a new instance of the <see cref="DescriptionButton"/> class.
     /// </summary>
     public DescriptionButton() => InitializeComponent();
 
-    /// <summary>
-    /// 简介文本，为空时不显示按钮。
-    /// </summary>
-    public string Description
+    private async void OnDescriptionClickAsync(object sender, RoutedEventArgs e)
     {
-        get => (string)GetValue(DescriptionProperty);
-        set => SetValue(DescriptionProperty, value);
-    }
-
-    private static void OnDescriptionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        var instance = d as DescriptionButton;
-        var description = e.NewValue as string;
-        if (instance?.DescriptionBtn is null)
+        // 先捕获当前绑定的条目：列表虚拟化可能在本方法 await 期间把按钮回收给另一条数据.
+        var video = ViewModel;
+        if (video is null)
         {
             return;
         }
 
-        instance.DescriptionBtn.Visibility = string.IsNullOrEmpty(description) ? Visibility.Collapsed : Visibility.Visible;
-        instance.FlyoutTextBlock.Text = description;
+        FlyoutTextBlock.Text = ResourceToolkit.GetLocalizedString(StringNames.LoadingAndWait);
+        FlyoutBase.ShowAttachedFlyout(DescriptionBtn);
+        var description = await video.EnsureDescriptionAsync();
+        if (!ReferenceEquals(video, ViewModel))
+        {
+            // 按钮已经改绑到别的条目：数据已写回原来那条，但不要用它去改这一张卡片的浮层.
+            return;
+        }
+
+        FlyoutTextBlock.Text = string.IsNullOrEmpty(description)
+            ? ResourceToolkit.GetLocalizedString(StringNames.NoSpecificData)
+            : description;
     }
 }

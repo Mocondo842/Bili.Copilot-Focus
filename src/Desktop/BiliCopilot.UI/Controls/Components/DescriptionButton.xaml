@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:ext="using:BiliCopilot.UI.Extensions"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:local="using:BiliCopilot.UI.Controls.Components"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
@@ -14,11 +15,11 @@
         <Button
             x:Name="DescriptionBtn"
             AutomationProperties.Name="{ext:Locale Name=Description}"
+            Click="OnDescriptionClickAsync"
             Style="{StaticResource IconButtonStyle}"
-            ToolTipService.ToolTip="{ext:Locale Name=Description}"
-            Visibility="Collapsed">
+            ToolTipService.ToolTip="{ext:Locale Name=Description}">
             <ic:SymbolIcon FontSize="12" Symbol="Feed" />
-            <Button.Flyout>
+            <FlyoutBase.AttachedFlyout>
                 <Flyout Placement="Bottom">
                     <TextBlock
                         x:Name="FlyoutTextBlock"
@@ -27,7 +28,7 @@
                         LineHeight="24"
                         TextWrapping="Wrap" />
                 </Flyout>
-            </Button.Flyout>
+            </FlyoutBase.AttachedFlyout>
         </Button>
     </Grid>
 </base:LayoutUserControlBase>

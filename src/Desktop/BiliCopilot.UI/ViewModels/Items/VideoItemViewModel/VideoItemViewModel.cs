@@ -30,6 +30,8 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
     private readonly VideoFavoriteFolder? _favFolder;
     private readonly Action<VideoItemViewModel>? _playAction;
     private readonly Action<VideoItemViewModel>? _showCommentAction;
+    private bool _descriptionLoaded;
+    private Task<string?>? _descriptionTask;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VideoItemViewModel"/> class.
@@ -115,6 +117,38 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
     [RelayCommand]
     private void ShowComment()
         => _showCommentAction?.Invoke(this);
+
+    /// <summary>
+    /// 确保能拿到视频简介：本地没有时按需向服务端取一次.
+    /// 并发点击只发一次请求；取回成功（无论内容是否为空）才缓存，失败则允许下次重试.
+    /// </summary>
+    /// <returns>视频简介，可能为空.</returns>
+    public Task<string?> EnsureDescriptionAsync()
+    {
+        if (!string.IsNullOrEmpty(Description) || _descriptionLoaded)
+        {
+            return Task.FromResult(Description);
+        }
+
+        return _descriptionTask ??= LoadDescriptionAsync();
+    }
+
+    private async Task<string?> LoadDescriptionAsync()
+    {
+        try
+        {
+            var view = await this.Get<IPlayerService>().GetVideoPageDetailAsync(new MediaIdentifier(Data.Identifier.Id, Data.Identifier.Title, Data.Identifier.Cover));
+            Description = view.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description);
+            _descriptionLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            _descriptionTask = default;
+            this.Get<ILogger<VideoItemViewModel>>().LogError(ex, "获取视频简介失败");
+        }
+
+        return Description;
+    }
 
     [RelayCommand]
     private void ShowUserSpace()

@@ -533,7 +533,7 @@
                                     <local:DescriptionButton
                                         Grid.Column="2"
                                         VerticalAlignment="Center"
-                                        Description="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.Description}" />
+                                        ViewModel="{TemplateBinding ViewModel}" />
                                 </Grid>
 
                                 <base:TrimTextBlock
@@ -580,12 +580,13 @@
                                                 Text="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.DanmakuCount, Converter={StaticResource CountConverter}}"
                                                 TextLineBounds="Tight" />
                                         </StackPanel>
+                                        <!--  点赞态无可取数据（VideoCommunityInformation 没有 IsLiked），图标初始恒为空心；数字用服务端返回的点赞数  -->
                                         <ToggleButton
+                                            x:Name="LikeButton"
                                             Padding="0"
                                             VerticalAlignment="Center"
                                             Background="Transparent"
                                             BorderThickness="0"
-                                            Command="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.ToggleLikeCommand}"
                                             IsChecked="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.IsLiked, Mode=OneWay}"
                                             ToolTipService.ToolTip="{ext:Locale Name=Like}">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
@@ -604,11 +605,11 @@
                                             </StackPanel>
                                         </ToggleButton>
                                         <Button
+                                            x:Name="CommentButton"
                                             Padding="0"
                                             VerticalAlignment="Center"
                                             Background="Transparent"
                                             BorderThickness="0"
-                                            Command="{Binding RelativeSource={RelativeSource Mode=TemplatedParent}, Path=ViewModel.ShowCommentCommand}"
                                             ToolTipService.ToolTip="{ext:Locale Name=Reply}">
                                             <StackPanel Orientation="Horizontal" Spacing="4">
                                                 <ic:SymbolIcon

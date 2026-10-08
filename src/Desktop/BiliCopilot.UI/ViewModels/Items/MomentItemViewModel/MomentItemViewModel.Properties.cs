@@ -75,6 +75,11 @@ public sealed partial class MomentItemViewModel
     public object? InnerContent { get; init; }
 
     /// <summary>
+    /// 内层视频（只有视频动态有值，用于按需取回该视频的简介）.
+    /// </summary>
+    public VideoItemViewModel? InnerVideo => InnerContent as VideoItemViewModel;
+
+    /// <summary>
     /// 卡片样式.
     /// </summary>
     public MomentCardStyle Style { get; init; }
