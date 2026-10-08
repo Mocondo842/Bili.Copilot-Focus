@@ -42,6 +42,7 @@ public sealed partial class PlayerViewModel
     private bool _isTlsFailed;
     private double _prevPosition;
     private bool _isBroken;
+    private SubtitleItemViewModel? _lastSelectedSubtitle;
 
     public event EventHandler<string> WarningOccurred;
     public event EventHandler ChapterInitialized;

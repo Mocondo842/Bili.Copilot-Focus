@@ -114,7 +114,9 @@ public sealed partial class PlayerViewModel
             return;
         }
 
-        if ((IsConnecting || Player.IsLoading) && Window is not null)
+        // fork：原来这里只在「连接中 / 加载中」才收 WinUI 侧的全屏与画中画，而 F11、Ctrl+M 改的是
+        // 播放器自己的全屏 / 紧凑窗口状态，于是窗口化播放时按 ESC 什么都不发生。改成无条件先收一遍。
+        if (Window is not null)
         {
             var presenterKind = Window.GetWindow().Presenter.Kind;
             if (presenterKind == Microsoft.UI.Windowing.AppWindowPresenterKind.FullScreen)
@@ -131,6 +133,12 @@ public sealed partial class PlayerViewModel
         {
             IsExtraPanelVisible = false;
             return;
+        }
+
+        if (IsStatsOverlayShown)
+        {
+            await Client!.ToggleStatsOverlayAsync();
+            IsStatsOverlayShown = false;
         }
 
         if (Player.IsFullScreen)
@@ -469,20 +477,13 @@ public sealed partial class PlayerViewModel
     }
 
     [RelayCommand]
-    private async Task ToggleSubtitleEnabledAsync()
+    private Task ToggleSubtitleEnabledAsync()
     {
-        if (IsSubtitleEnabled)
-        {
-            var selected = Subtitles.FirstOrDefault(p => p.IsSelected);
-            if (selected != null)
-            {
-                Subtitles.FirstOrDefault(p => p.IsSelected)?.SelectCommand.Execute(default);
-            }
-        }
-        else
-        {
-            await Client!.SetSubtitleTrackAsync(default);
-        }
+        // fork：上游这里在「字幕已开」的分支里执行的是条目的 SelectCommand（选中），
+        // 而重复选中当前字幕等于没有动作，所以快捷键看着完全没反应。
+        // 现在只翻转开关，真正的显隐交给 OnIsSubtitleEnabledChanged → ApplySubtitleEnabledAsync。
+        IsSubtitleEnabled = !IsSubtitleEnabled;
+        return Task.CompletedTask;
     }
 
     [RelayCommand]

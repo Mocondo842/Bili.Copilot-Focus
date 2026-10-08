@@ -183,8 +183,22 @@ internal sealed partial class PgcMediaSourceResolver(IPlayerService playerServic
 
         var maxAudioQuality = audioSegments?.Max(p => Convert.ToInt32(p.Id));
         var preferCodec = AppToolkit.GetPreferCodecId();
-        var vSeg = videoSegments?.FirstOrDefault(p => p.Id == selectedFormat.Quality.ToString() && p.Codecs.Contains(preferCodec))
-            ?? videoSegments?.FirstOrDefault(p => p.Id == selectedFormat.Quality.ToString());
+
+        // fork：原来只按首选项的子串匹配（"hev"），失败时静默退回第一段——日志里分不清是
+        // 「服务端根本没给 HEVC」还是「匹配没命中」。改成按编码族匹配，并把候选与结果写进日志。
+        var qualitySegments = videoSegments?.Where(p => p.Id == selectedFormat.Quality.ToString()).ToList() ?? [];
+        var vSeg = qualitySegments.FirstOrDefault(p => AppToolkit.IsCodecMatch(p.Codecs, preferCodec))
+            ?? qualitySegments.FirstOrDefault();
+        if (qualitySegments.Count > 0)
+        {
+            logger.LogInformation(
+                "选流：清晰度 {Quality}，偏好编码 {Prefer}，可选编码 {Available}，选中 {Chosen}",
+                selectedFormat.Quality,
+                preferCodec,
+                string.Join('/', qualitySegments.Select(p => p.Codecs)),
+                vSeg?.Codecs ?? "(无)");
+        }
+
         var aSeg = audioSegments?.FirstOrDefault(p => p.Id == maxAudioQuality.ToString());
 
         var videoUrl = vSeg?.BaseUrl;

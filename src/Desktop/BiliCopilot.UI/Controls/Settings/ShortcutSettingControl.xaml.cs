@@ -1,4 +1,4 @@
-// Copyright (c) Bili Copilot. All rights reserved.
+﻿// Copyright (c) Bili Copilot. All rights reserved.
 // 本文件由 fork 新增，不属于上游；见仓库根目录 FORK.md。
 
 using BiliCopilot.UI.Toolkits;

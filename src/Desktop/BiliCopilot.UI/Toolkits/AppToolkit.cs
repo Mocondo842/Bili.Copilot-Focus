@@ -118,6 +118,32 @@ internal sealed partial class AppToolkit : SharedAppToolkit
     }
 
     /// <summary>
+    /// 判断某段流的编码描述是否属于偏好编码族。
+    /// 服务端给的写法不固定（hev1 / hvc1 / h265、av01 / av1、avc1 / h264），只按首选项的子串匹配会漏。
+    /// </summary>
+    /// <param name="codecs">流的编码描述，如 <c>hev1.1.6.L150.90</c>.</param>
+    /// <param name="preferCodecId">偏好编码标识，见 <see cref="GetPreferCodecId"/>.</param>
+    /// <returns>是否属于偏好编码族.</returns>
+    public static bool IsCodecMatch(string? codecs, string preferCodecId)
+    {
+        if (string.IsNullOrEmpty(codecs))
+        {
+            return false;
+        }
+
+        return preferCodecId switch
+        {
+            "hev" => codecs.Contains("hev", StringComparison.OrdinalIgnoreCase)
+                || codecs.Contains("hvc", StringComparison.OrdinalIgnoreCase)
+                || codecs.Contains("h265", StringComparison.OrdinalIgnoreCase),
+            "av01" => codecs.Contains("av01", StringComparison.OrdinalIgnoreCase)
+                || codecs.Contains("av1", StringComparison.OrdinalIgnoreCase),
+            _ => codecs.Contains("avc", StringComparison.OrdinalIgnoreCase)
+                || codecs.Contains("h264", StringComparison.OrdinalIgnoreCase),
+        };
+    }
+
+    /// <summary>
     /// 是否为P2P地址.
     /// </summary>
     /// <returns>检查结果.</returns>

@@ -40,6 +40,9 @@ check "AppWindow.Show();"                                            2 "F3 单�
 check "PlayerShortcutToolkit.TryMatch(args.VirtualKey, out var action)" 1 "S1 播放器按键改走快捷键表"
 check "PlayerShortcutToolkit.Get(PlayerShortcutAction.SkipForward)"   1 "S2 长按三倍速跟随「快进」的绑定"
 check "PlayerShortcutToolkit.Set(action, shortcut)"                   1 "S3 设置页写入新绑定"
+check "AppToolkit.IsCodecMatch("                                      2 "S5 编码偏好按编码族匹配（两个 resolver）"
+check "IsSubtitleEnabled = !IsSubtitleEnabled;"                       1 "S6 字幕开关快捷键只翻转开关"
+check "ApplySubtitleEnabledAsync(value)"                              1 "S7 字幕显隐走单独的应用路径"
 
 # 快捷键设置控件必须挂在设置页上（XAML 不在 check 的搜索范围内，单独查）
 grep -qF '<settings:ShortcutSettingControl />' src/Desktop/BiliCopilot.UI/Pages/SettingsPage.xaml \
@@ -48,6 +51,12 @@ grep -qF '<settings:ShortcutSettingControl />' src/Desktop/BiliCopilot.UI/Pages/
 # 反向检查：不该再向 mpv 发送没有绑定的 ESC（只看代码行，注释里提到不算）
 if grep -rEn --include=*.cs '^[[:space:]]*(await )?Client!?\.SendKeyPressAsync\("ESC"\)' src >/dev/null 2>&1; then
   echo "UNEXPECTED: 仍在向 mpv 发送没有绑定的 ESC（见 FORK.md F5）"
+  fail=1
+fi
+
+# 反向检查：ESC 不该再被「只在连接中/加载中才收全屏」的条件挡住（见 FORK.md F7）
+if grep -rF --include=*.cs -- '(IsConnecting || Player.IsLoading) && Window is not null' src >/dev/null 2>&1; then
+  echo "UNEXPECTED: ESC 又被「连接中/加载中」的条件限制住了（见 FORK.md F7）"
   fail=1
 fi
 

@@ -43,6 +43,9 @@ Check 'AppWindow.Show();' 2 'F3 单实例/托盘唤回窗口'
 Check 'PlayerShortcutToolkit.TryMatch(args.VirtualKey, out var action)' 1 'S1 播放器按键改走快捷键表'
 Check 'PlayerShortcutToolkit.Get(PlayerShortcutAction.SkipForward)' 1 'S2 长按三倍速跟随「快进」的绑定'
 Check 'PlayerShortcutToolkit.Set(action, shortcut)' 1 'S3 设置页写入新绑定'
+Check 'AppToolkit.IsCodecMatch(' 2 'S5 编码偏好按编码族匹配（两个 resolver）'
+Check 'IsSubtitleEnabled = !IsSubtitleEnabled;' 1 'S6 字幕开关快捷键只翻转开关'
+Check 'ApplySubtitleEnabledAsync(value)' 1 'S7 字幕显隐走单独的应用路径'
 
 # 快捷键设置控件必须挂在设置页上（XAML 不在 Check 的搜索范围内，单独查）
 if (-not (Select-String -Path 'src/Desktop/BiliCopilot.UI/Pages/SettingsPage.xaml' -SimpleMatch -Pattern '<settings:ShortcutSettingControl />')) {
@@ -55,6 +58,14 @@ $staleEsc = (Get-ChildItem -Path src -Recurse -Filter *.cs |
              Select-String -Pattern '^\s*(await )?Client!?\.SendKeyPressAsync\("ESC"\)').Count
 if ($staleEsc -gt 0) {
     Write-Host 'UNEXPECTED: 仍在向 mpv 发送没有绑定的 ESC（见 FORK.md F5）'
+    $fail = 1
+}
+
+# 反向检查：ESC 不该再被「只在连接中/加载中才收全屏」的条件挡住（见 FORK.md F7）
+$staleEscGuard = (Get-ChildItem -Path src -Recurse -Filter *.cs |
+                  Select-String -SimpleMatch -Pattern '(IsConnecting || Player.IsLoading) && Window is not null').Count
+if ($staleEscGuard -gt 0) {
+    Write-Host 'UNEXPECTED: ESC 又被「连接中/加载中」的条件限制住了（见 FORK.md F7）'
     $fail = 1
 }
 

@@ -360,8 +360,8 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
         CheckBottomProgressBarVisible();
     }
 
+    // fork：开关变化时直接应用（原来是回调 ToggleSubtitleEnabledCommand，而快捷键本身又要翻转这个开关，
+    // 两边互相触发）。现在「翻转开关」与「应用显隐」各自只有一条路径。
     partial void OnIsSubtitleEnabledChanged(bool value)
-    {
-        ToggleSubtitleEnabledCommand.Execute(value);
-    }
+        => _ = ApplySubtitleEnabledAsync(value);
 }

@@ -5,24 +5,32 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:base="using:Richasy.WinUIKernel.Share.Base"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ic="using:FluentIcons.WinUI"
     xmlns:local="using:BiliCopilot.UI.Controls.Settings"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
     <base:SettingsExpander
-        Description="点一下右边的方框，再按下想用的按键即可改绑；若这个组合已被别的动作占用，两边自动对调。"
+        Description="点一下右边方框再按下新键即可改绑；撞键会自动两边对调，改坏了可以全部恢复默认。"
         Header="播放器快捷键">
-        <StackPanel Spacing="8">
-            <TextBlock
-                Style="{StaticResource CaptionTextBlockStyle}"
-                Text="快进 / 快退 / 音量只在播放控制栏隐藏时生效（控制栏显示时方向键交给界面导航）。统计信息覆盖层打开时，数字键 1-5 与上下键交给播放器本身。"
-                TextWrapping="Wrap" />
-            <StackPanel x:Name="ShortcutPanel" Spacing="6" />
-            <Button
-                x:Name="ResetAllButton"
-                HorizontalAlignment="Left"
-                Click="OnResetAllClick"
-                Content="全部恢复默认" />
-        </StackPanel>
+        <base:SettingsExpander.HeaderIcon>
+            <ic:SymbolIcon Symbol="KeyboardShift" />
+        </base:SettingsExpander.HeaderIcon>
+        <base:SettingsExpander.Items>
+            <base:SettingsCard
+                Description="快进 / 快退 / 音量只在播放控制栏隐藏时生效；统计信息覆盖层打开时，数字键 1-5 与上下键交给播放器本身。"
+                Header="按键绑定">
+                <StackPanel x:Name="ShortcutPanel" Spacing="6" />
+            </base:SettingsCard>
+            <base:SettingsCard
+                Description="把所有动作的快捷键恢复成出厂设置。"
+                Header="恢复默认">
+                <Button
+                    x:Name="ResetAllButton"
+                    MinWidth="120"
+                    Click="OnResetAllClick"
+                    Content="全部恢复默认" />
+            </base:SettingsCard>
+        </base:SettingsExpander.Items>
     </base:SettingsExpander>
 </local:SettingsPageControlBase>

@@ -934,6 +934,7 @@ public sealed partial class PlayerViewModel
                 var cid = videoVM._part.Identifier.Id;
                 var metas = await service.GetSubtitleMetasAsync(aid, cid);
                 Subtitles.Clear();
+                _lastSelectedSubtitle = null;
                 if (metas?.Count > 0)
                 {
                     foreach (var item in metas)
@@ -958,8 +959,43 @@ public sealed partial class PlayerViewModel
         }
     }
 
+    private async Task ApplySubtitleEnabledAsync(bool isEnabled)
+    {
+        if (Player is null)
+        {
+            return;
+        }
+
+        if (!isEnabled)
+        {
+            // 关：走条目自己的开关，它会清掉选中态并禁用字幕轨（选中时已经记过是哪条，方便再打开）。
+            var selected = Subtitles.FirstOrDefault(p => p.IsSelected);
+            if (selected is not null)
+            {
+                selected.ActiveCommand.Execute(default);
+            }
+            else
+            {
+                await Client!.SetSubtitleTrackAsync(default);
+            }
+
+            return;
+        }
+
+        // 开：优先恢复上一次用的那条；列表为空说明关闭期间根本没加载，补一次加载（会自动选中第一条非 AI 字幕）。
+        var target = _lastSelectedSubtitle ?? Subtitles.FirstOrDefault();
+        if (target is null)
+        {
+            await LoadSubtitlesAsync();
+            return;
+        }
+
+        target.SelectCommand.Execute(default);
+    }
+
     private async Task SelectSubtitleAsync(SubtitleItemViewModel vm)
     {
+        _lastSelectedSubtitle = vm;
         foreach (var item in Subtitles)
         {
             item.IsSelected = item.Data.Equals(vm.Data);
