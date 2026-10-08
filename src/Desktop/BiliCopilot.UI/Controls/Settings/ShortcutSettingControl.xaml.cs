@@ -2,7 +2,6 @@
 // 本文件由 fork 新增，不属于上游；见仓库根目录 FORK.md。
 
 using BiliCopilot.UI.Toolkits;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Windows.System;
 
