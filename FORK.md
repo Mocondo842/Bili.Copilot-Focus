@@ -14,7 +14,7 @@
 | `master` | 上游镜像，只用于同步 | **不在 master 上提交**；用 GitHub 的「Sync fork」把它对齐上游 |
 | `focus/derec` | 去推荐化补丁分支（本分支） | 上面的补丁只在这里提交；每次同步后 `master` 合进本分支 |
 
-## 补丁清单（相对上游 master：`src/` 22 files changed, 914 insertions(+), 125 deletions(-)；含本 fork 自带的构建/安装脚本与文档共 31 files changed, 1900 insertions(+), 188 deletions(-)）
+## 补丁清单（相对上游 master：`src/` 35 files changed, 1237 insertions(+), 159 deletions(-)；含本 fork 自带的构建/安装脚本与文档共 44 files changed, 2263 insertions(+), 222 deletions(-)）
 
 | 编号 | 文件 | 改动 |
 |---|---|---|
@@ -54,6 +54,9 @@
 | S2 | 快捷键卡片把 19 行直接铺在设置页上 | 收进 `SettingsExpander.Items`：默认折叠；展开后**每个动作一张 `SettingsCard`**（Header=动作名，Description=一句中立描述，Content=按键框），与「播放器控制」同构；末条是「恢复默认」。条目在代码里生成（`Items` 是普通 `List<object>`，模板只在 `OnApplyTemplate` 读一次，所以必须在套用模板前填好） |
 | F6 | 编码偏好选 HEVC，实际仍是 H.264 | 选流只按子串匹配（`Codecs.Contains("hev")`）且失败时静默退回第一段；现在按**编码族**匹配（hev1/hvc1/h265、av01/av1、avc1/h264），并把「偏好编码 / 该清晰度的候选编码 / 最终选中」写进日志——能直接看出是服务端没给 HEVC，还是匹配没命中 |
 | F7 | 快捷键 ESC、V 按了没反应 | ESC 原先只在「连接中/加载中」才收 WinUI 全屏与画中画，而 F11、Ctrl+M 改的是**播放器自己的**全屏/紧凑窗口状态 → 窗口化播放时按 ESC 什么都不发生；现在无条件先收 WinUI 侧，再关扩展面板、统计覆盖层，最后收播放器全屏/紧凑窗口。V 原先在「字幕已开」的分支里执行的是条目的**选中**命令（重复选中＝空操作）；现在改成翻转开关 + 单独的显隐应用路径 |
+| C1 | 搜索结果的视频卡片没有点赞 / 评论按钮（动态页、用户空间都有） | `VideoItemViewModel` 补 `IsLiked` / `CommentCount` / `ToggleLikeCommand`（走 `IPlayerService.ToggleVideoLikeAsync(aid, …)`）与 `ShowCommentCommand`；评论面板沿用动态卡片那套：**由页面注入 `Action<VideoItemViewModel>`**（`CommentMainViewModel` 是 transient，卡片里 `this.Get<>` 会拿到另一个实例、浮层不会响应，只能由页面传动作）。搜索页补 `CommentOverlayPanel`，用户空间复用已有的那个。数据面：BiliKernel 的搜索映射把 `like`→`LikeCount`、`review`→`CommentCount` 都填了，但 `VideoCommunityInformation` **没有 `IsLiked` 字段**，所以「已赞状态」无从得知——首次点击只发点赞、不会误取消，这是上游模型缺字段，不是这里漏了 |
+| C2 | 用户空间、搜索结果的视频卡片没有「显示视频简介」按钮（动态页有） | 简介取自 `VideoExtensionDataId.Description`（搜索接口的 `description`/`desc`）。搜索结果卡片是 `ControlTemplate`，**模板里的弹层内容不能用 `RelativeSource=TemplatedParent` 绑定**（弹层不在模板可视树里，绑定会静默失效），所以新增小控件 `Controls/Components/DescriptionButton.xaml`：暴露 `Description` 依赖属性、内部用 `x:Bind` + `PropertyChangedCallback` 回填，为空时按钮自动隐藏。用户空间的 `PersonalVideoMomentPresenter` 是 UserControl，直接照搬动态页的写法 |
+| C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |
 
 > `AUDCLNT_E_DEVICE_INVALIDATED` 是 WASAPI 音频端点被系统回收（切设备/蓝牙断开/休眠）时报的错，音频输出重建由 libmpv 的 wasapi AO 负责，不在应用层；这块没动。F4 针对的是同一条日志里那串音频流地址打开失败的报错。
 
