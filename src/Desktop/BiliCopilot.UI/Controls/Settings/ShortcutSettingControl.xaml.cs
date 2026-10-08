@@ -1,8 +1,7 @@
-﻿// Copyright (c) Bili Copilot. All rights reserved.
+// Copyright (c) Bili Copilot. All rights reserved.
 // 本文件由 fork 新增，不属于上游；见仓库根目录 FORK.md。
 
 using BiliCopilot.UI.Toolkits;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Windows.System;
@@ -29,7 +28,9 @@ public sealed partial class ShortcutSettingControl : SettingsPageControlBase
     }
 
     /// <inheritdoc/>
-    protected override void OnControlLoaded()
+    protected override void OnControlLoaded() => RefreshBoxes();
+
+    private void RefreshBoxes()
     {
         foreach (var pair in _boxes)
         {
@@ -79,7 +80,7 @@ public sealed partial class ShortcutSettingControl : SettingsPageControlBase
         PlayerShortcutToolkit.ResetAll();
         _capturingBox = null;
         _capturingAction = null;
-        OnControlLoaded();
+        RefreshBoxes();
     }
 
     private void OnShortcutBoxGotFocus(object sender, RoutedEventArgs e)
