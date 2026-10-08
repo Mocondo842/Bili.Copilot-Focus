@@ -190,7 +190,7 @@ public sealed partial class UserSpacePageViewModel : ViewModelBase
             {
                 foreach (var item in videos)
                 {
-                    SearchVideos.Add(new VideoItemViewModel(item, VideoCardStyle.Search));
+                    SearchVideos.Add(new VideoItemViewModel(item, VideoCardStyle.Search, showCommentAction: ShowVideoComment));
                 }
 
                 SearchUpdated?.Invoke(this, EventArgs.Empty);
@@ -253,6 +253,19 @@ public sealed partial class UserSpacePageViewModel : ViewModelBase
 
         IsCommentsOpened = true;
         CommentModule.Initialize(moment.CommentId, moment.CommentType!.Value, Richasy.BiliKernel.Models.CommentSortType.Hot);
+        CommentModule.RefreshCommand.Execute(default);
+    }
+
+    private void ShowVideoComment(VideoItemViewModel video)
+    {
+        var videoId = video.Data.Identifier.Id;
+        if (CommentModule.Id == videoId)
+        {
+            return;
+        }
+
+        IsCommentsOpened = true;
+        CommentModule.Initialize(videoId, Richasy.BiliKernel.Models.CommentTargetType.Video, Richasy.BiliKernel.Models.CommentSortType.Hot);
         CommentModule.RefreshCommand.Execute(default);
     }
 

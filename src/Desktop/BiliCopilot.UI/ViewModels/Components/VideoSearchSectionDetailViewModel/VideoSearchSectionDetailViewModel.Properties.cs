@@ -22,6 +22,7 @@ public sealed partial class VideoSearchSectionDetailViewModel
     private int? _currentPage;
     private string _keyword;
     private bool _isPreventLoadMore;
+    private Action<VideoItemViewModel>? _showCommentAction;
 
     [ObservableProperty]
     private bool _isEmpty;

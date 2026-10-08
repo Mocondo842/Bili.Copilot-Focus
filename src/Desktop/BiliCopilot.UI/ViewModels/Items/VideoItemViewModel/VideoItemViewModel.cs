@@ -8,6 +8,7 @@ using BiliCopilot.UI.ViewModels.Core;
 using CommunityToolkit.Mvvm.Input;
 using Humanizer;
 using Microsoft.Extensions.Logging;
+using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Bili.User;
 using Richasy.BiliKernel.Models.Media;
 using Richasy.WinUIKernel.Share.Base;
@@ -28,6 +29,7 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
     private readonly Action<VideoItemViewModel>? _removeAction;
     private readonly VideoFavoriteFolder? _favFolder;
     private readonly Action<VideoItemViewModel>? _playAction;
+    private readonly Action<VideoItemViewModel>? _showCommentAction;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VideoItemViewModel"/> class.
@@ -37,12 +39,14 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
         VideoCardStyle style,
         Action<VideoItemViewModel> removeAction = default,
         VideoFavoriteFolder? favFolder = default,
-        Action<VideoItemViewModel>? playAction = default)
+        Action<VideoItemViewModel>? playAction = default,
+        Action<VideoItemViewModel>? showCommentAction = default)
         : base(info)
     {
         _removeAction = removeAction;
         _favFolder = favFolder;
         _playAction = playAction;
+        _showCommentAction = showCommentAction;
         var primaryLan = ApplicationLanguages.Languages[0];
         Style = style;
         Title = info.Identifier.Title;
@@ -54,6 +58,8 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
         PlayCount = info.CommunityInformation?.PlayCount;
         DanmakuCount = info.CommunityInformation?.DanmakuCount;
         LikeCount = info.CommunityInformation?.LikeCount;
+        CommentCount = info.CommunityInformation?.CommentCount;
+        Description = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.Description);
         TagName = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.TagName);
         RecommendReason = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.RecommendReason);
         Subtitle = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.Subtitle);
@@ -89,6 +95,26 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
 
         this.Get<AppViewModel>().OpenPlayerCommand.Execute(new MediaSnapshot(Data, true));
     }
+
+    [RelayCommand]
+    private async Task ToggleLikeAsync()
+    {
+        var state = !IsLiked;
+        try
+        {
+            await this.Get<IPlayerService>().ToggleVideoLikeAsync(Data.Identifier.Id, state);
+            IsLiked = state;
+            LikeCount = Math.Max(0, (LikeCount ?? 0) + (state ? 1 : -1));
+        }
+        catch (Exception ex)
+        {
+            this.Get<ILogger<VideoItemViewModel>>().LogError(ex, "切换视频点赞状态失败");
+        }
+    }
+
+    [RelayCommand]
+    private void ShowComment()
+        => _showCommentAction?.Invoke(this);
 
     [RelayCommand]
     private void ShowUserSpace()

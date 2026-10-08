@@ -32,7 +32,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEFAULT_VERSION: '2.2511.2.907'
+  DEFAULT_VERSION: '2.2511.2.908'
   REPORT_BRANCH: 'ci/logs'
   CERT_FILE: 'focus-sideload.pfx'
   CERT_CER: 'focus-sideload.cer'

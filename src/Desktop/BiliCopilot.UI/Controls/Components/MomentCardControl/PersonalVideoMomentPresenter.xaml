@@ -7,6 +7,7 @@
     xmlns:controls="using:BiliCopilot.UI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:ext="using:BiliCopilot.UI.Extensions"
+    xmlns:ic="using:FluentIcons.WinUI"
     xmlns:local="using:BiliCopilot.UI.Controls.Components"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
@@ -18,12 +19,36 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock
-            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-            MaxLines="1"
-            Style="{StaticResource CaptionTextBlockStyle}"
-            Text="{x:Bind ViewModel.Tip, Mode=OneWay}"
-            TextTrimming="CharacterEllipsis" />
+        <Grid ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                MaxLines="1"
+                Style="{StaticResource CaptionTextBlockStyle}"
+                Text="{x:Bind ViewModel.Tip, Mode=OneWay}"
+                TextTrimming="CharacterEllipsis" />
+            <Button
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                AutomationProperties.Name="{ext:Locale Name=Description}"
+                Style="{StaticResource IconButtonStyle}"
+                ToolTipService.ToolTip="{ext:Locale Name=Description}"
+                Visibility="{x:Bind ViewModel.Description, Converter={StaticResource ObjectToVisibilityConverter}, Mode=OneWay}">
+                <ic:SymbolIcon FontSize="12" Symbol="Feed" />
+                <Button.Flyout>
+                    <Flyout Placement="Bottom">
+                        <local:EmoteTextBlock
+                            MaxWidth="400"
+                            MaxLines="99"
+                            Text="{x:Bind ViewModel.Description, Mode=OneWay}" />
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
+        </Grid>
         <controls:BasicCoverImage
             Grid.Row="1"
             HorizontalAlignment="Stretch"

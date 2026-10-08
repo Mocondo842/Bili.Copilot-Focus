@@ -63,7 +63,25 @@ public sealed partial class VideoItemViewModel
     /// <summary>
     /// 点赞数.
     /// </summary>
-    public double? LikeCount { get; set; }
+    [ObservableProperty]
+    public partial double? LikeCount { get; set; }
+
+    /// <summary>
+    /// 评论数.
+    /// </summary>
+    [ObservableProperty]
+    public partial double? CommentCount { get; set; }
+
+    /// <summary>
+    /// 是否已点赞.
+    /// </summary>
+    [ObservableProperty]
+    public partial bool IsLiked { get; set; }
+
+    /// <summary>
+    /// 视频简介.
+    /// </summary>
+    public string? Description { get; init; }
 
     /// <summary>
     /// 标签名称.

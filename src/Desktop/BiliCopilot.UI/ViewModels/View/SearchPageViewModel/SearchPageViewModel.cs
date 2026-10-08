@@ -25,10 +25,12 @@ public sealed partial class SearchPageViewModel : LayoutPageViewModelBase
     /// </summary>
     public SearchPageViewModel(
         ISearchService service,
+        CommentMainViewModel comment,
         ILogger<SearchPageViewModel> logger)
     {
         _service = service;
         _logger = logger;
+        CommentModule = comment;
     }
 
     /// <inheritdoc/>
@@ -122,10 +124,24 @@ public sealed partial class SearchPageViewModel : LayoutPageViewModelBase
         section.TryFirstLoadCommand.Execute(default);
     }
 
+    private void ShowComment(VideoItemViewModel video)
+    {
+        IsCommentsOpened = true;
+        var videoId = video.Data.Identifier.Id;
+        if (CommentModule.Id == videoId)
+        {
+            return;
+        }
+
+        CommentModule.Initialize(videoId, Richasy.BiliKernel.Models.CommentTargetType.Video, Richasy.BiliKernel.Models.CommentSortType.Hot);
+        CommentModule.RefreshCommand.Execute(default);
+    }
+
     private VideoSearchSectionDetailViewModel CreateVideoSection(IReadOnlyList<VideoInformation> videos, int? page)
     {
         var newSection = new VideoSearchSectionDetailViewModel(_service);
         newSection.Initialize(Keyword, new SearchPartition(0, ResourceToolkit.GetLocalizedString(StringNames.Video)));
+        newSection.SetShowCommentAction(ShowComment);
         newSection.SetFirstPageData(videos, page);
         return newSection;
     }

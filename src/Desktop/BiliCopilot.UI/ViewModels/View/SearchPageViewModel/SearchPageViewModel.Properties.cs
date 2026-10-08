@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Bili Copilot. All rights reserved.
 
+using BiliCopilot.UI.ViewModels.Components;
 using BiliCopilot.UI.ViewModels.Items;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
@@ -29,6 +30,14 @@ public sealed partial class SearchPageViewModel
     /// </summary>
     [ObservableProperty]
     private List<ISearchSectionDetailViewModel>? _sections;
+
+    [ObservableProperty]
+    private bool _isCommentsOpened;
+
+    /// <summary>
+    /// 评论模块.
+    /// </summary>
+    public CommentMainViewModel CommentModule { get; }
 
     /// <summary>
     /// 分区初始化完成.

@@ -102,9 +102,11 @@
                     ToolTipService.ToolTip="{x:Bind ViewModel.ActualTime, Mode=OneWay}" />
             </Grid>
             <Grid Grid.Row="1">
+                <!--  MaxLines=0 即不限行数：评论一律完整显示，不再出现省略号与展开按钮  -->
                 <comp:EmoteTextBlock
                     x:Name="ReplyContentBlock"
                     HorizontalAlignment="Left"
+                    MaxLines="0"
                     Text="{x:Bind ViewModel.Content, Mode=OneWay}" />
             </Grid>
             <Grid Grid.Row="2" ColumnSpacing="12">

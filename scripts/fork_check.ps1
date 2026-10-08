@@ -24,7 +24,8 @@ if (-not (Test-Path 'src/Desktop/BiliCopilot.UI/Toolkits/DeRecommendToolkit.cs')
 
 foreach ($file in @(
     'src/Desktop/BiliCopilot.UI/Toolkits/PlayerShortcutToolkit.cs',
-    'src/Desktop/BiliCopilot.UI/Controls/Settings/ShortcutSettingControl.xaml')) {
+    'src/Desktop/BiliCopilot.UI/Controls/Settings/ShortcutSettingControl.xaml',
+    'src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml')) {
     if (-not (Test-Path $file)) {
         Write-Host "MISSING FILE: $file"
         $fail = 1
@@ -47,6 +48,25 @@ Check 'AppToolkit.IsCodecMatch(' 2 'S5 编码偏好按编码族匹配（两个 r
 Check 'IsSubtitleEnabled = !IsSubtitleEnabled;' 1 'S6 字幕开关快捷键只翻转开关'
 Check 'ApplySubtitleEnabledAsync(value)' 1 'S7 字幕显隐走单独的应用路径'
 Check 'PlayerShortcutToolkit.GetDescription(action)' 1 'S8 每个动作一条次级菜单（带描述）'
+Check 'ToggleVideoLikeAsync(Data.Identifier.Id, state)' 1 'C1 视频卡片点赞按钮走真实点赞接口'
+Check 'showCommentAction: _showCommentAction' 2 'C2 搜索卡片带评论动作（首屏 + 翻页）'
+Check 'newSection.SetShowCommentAction(ShowComment)' 1 'C3 搜索页把评论面板接到视频分区'
+Check 'showCommentAction: ShowVideoComment' 1 'C4 用户空间视频搜索卡片带评论动作'
+Check 'Richasy.BiliKernel.Models.CommentTargetType.Video' 2 'C5 评论面板按视频初始化（搜索页 + 用户空间）'
+Check 'VideoExtensionDataId.Description)' 1 'C6 视频卡片读简介扩展字段'
+
+# 卡片与评论改造的 XAML 锚点（XAML 不在 Check 的搜索范围内，单独查）
+foreach ($item in @(
+    @('src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml', 'ViewModel.ToggleLikeCommand', 'C7 搜索卡片点赞按钮'),
+    @('src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml', '<local:DescriptionButton', 'C8 搜索卡片简介按钮'),
+    @('src/Desktop/BiliCopilot.UI/Controls/Components/MomentCardControl/PersonalVideoMomentPresenter.xaml', 'Symbol="Feed"', 'C9 用户空间卡片简介按钮'),
+    @('src/Desktop/BiliCopilot.UI/Controls/Comment/CommentItemControl.xaml', 'MaxLines="0"', 'C10 评论不截断'),
+    @('src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml', '<comment:CommentOverlayPanel', 'C11 搜索页评论浮层'))) {
+    if (-not (Select-String -Path $item[0] -SimpleMatch -Pattern $item[1])) {
+        Write-Host "MISSING ANCHOR: $($item[2])"
+        $fail = 1
+    }
+}
 
 # 快捷键设置控件必须挂在设置页上（XAML 不在 Check 的搜索范围内，单独查）
 if (-not (Select-String -Path 'src/Desktop/BiliCopilot.UI/Pages/SettingsPage.xaml' -SimpleMatch -Pattern '<settings:ShortcutSettingControl />')) {

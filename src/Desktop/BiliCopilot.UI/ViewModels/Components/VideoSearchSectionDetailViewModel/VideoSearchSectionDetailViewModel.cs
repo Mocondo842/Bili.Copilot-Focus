@@ -29,6 +29,12 @@ public sealed partial class VideoSearchSectionDetailViewModel : ViewModelBase, I
         Sorts = [.. Enum.GetValues<ComprehensiveSearchSortType>()];
     }
 
+    /// <summary>
+    /// 设置显示评论的动作.
+    /// </summary>
+    public void SetShowCommentAction(Action<VideoItemViewModel> action)
+        => _showCommentAction = action;
+
     /// <inheritdoc/>
     public void Initialize(string keyword, SearchPartition partition)
     {
@@ -65,7 +71,7 @@ public sealed partial class VideoSearchSectionDetailViewModel : ViewModelBase, I
                         continue;
                     }
 
-                    Items.Add(new VideoItemViewModel(item, VideoCardStyle.Search));
+                    Items.Add(new VideoItemViewModel(item, VideoCardStyle.Search, showCommentAction: _showCommentAction));
                 }
 
                 ListUpdated?.Invoke(this, EventArgs.Empty);
@@ -99,7 +105,7 @@ public sealed partial class VideoSearchSectionDetailViewModel : ViewModelBase, I
                     continue;
                 }
 
-                Items.Add(new VideoItemViewModel(item, VideoCardStyle.Search));
+                Items.Add(new VideoItemViewModel(item, VideoCardStyle.Search, showCommentAction: _showCommentAction));
             }
 
             ListUpdated?.Invoke(this, EventArgs.Empty);

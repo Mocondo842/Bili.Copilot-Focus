@@ -27,6 +27,8 @@ check() { # $1=锚点文本  $2=期望出现次数  $3=说明
   || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Toolkits/PlayerShortcutToolkit.cs"; fail=1; }
 [ -f src/Desktop/BiliCopilot.UI/Controls/Settings/ShortcutSettingControl.xaml ] \
   || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Controls/Settings/ShortcutSettingControl.xaml"; fail=1; }
+[ -f src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml ] \
+  || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml"; fail=1; }
 
 check "!DeRecommendToolkit.Disabled && _view.Recommends is not null" 1 "G1 播放页推荐区块守卫"
 check "DeRecommendToolkit.Disabled || HotSearchItems.Count > 0"      1 "G2 热搜请求守卫"
@@ -44,6 +46,22 @@ check "AppToolkit.IsCodecMatch("                                      2 "S5 编�
 check "IsSubtitleEnabled = !IsSubtitleEnabled;"                       1 "S6 字幕开关快捷键只翻转开关"
 check "ApplySubtitleEnabledAsync(value)"                              1 "S7 字幕显隐走单独的应用路径"
 check "PlayerShortcutToolkit.GetDescription(action)"                  1 "S8 每个动作一条次级菜单（带描述）"
+check "ToggleVideoLikeAsync(Data.Identifier.Id, state)"               1 "C1 视频卡片点赞按钮走真实点赞接口"
+check "showCommentAction: _showCommentAction"                         2 "C2 搜索卡片带评论动作（首屏 + 翻页）"
+check "newSection.SetShowCommentAction(ShowComment)"                  1 "C3 搜索页把评论面板接到视频分区"
+check "showCommentAction: ShowVideoComment"                           1 "C4 用户空间视频搜索卡片带评论动作"
+check "Richasy.BiliKernel.Models.CommentTargetType.Video"             2 "C5 评论面板按视频初始化（搜索页 + 用户空间）"
+check "VideoExtensionDataId.Description)"                             1 "C6 视频卡片读简介扩展字段"
+
+# 卡片与评论改造的 XAML 锚点（XAML 不在 check 的搜索范围内，单独查）
+xcheck() { # $1=文件  $2=锚点文本  $3=说明
+  grep -qF -- "$2" "$1" || { echo "MISSING ANCHOR: $3"; fail=1; }
+}
+xcheck src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml 'ViewModel.ToggleLikeCommand' "C7 搜索卡片点赞按钮"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml '<local:DescriptionButton' "C8 搜索卡片简介按钮"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Components/MomentCardControl/PersonalVideoMomentPresenter.xaml 'Symbol="Feed"' "C9 用户空间卡片简介按钮"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Comment/CommentItemControl.xaml 'MaxLines="0"' "C10 评论不截断"
+xcheck src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml '<comment:CommentOverlayPanel' "C11 搜索页评论浮层"
 
 # 快捷键设置控件必须挂在设置页上（XAML 不在 check 的搜索范围内，单独查）
 grep -qF '<settings:ShortcutSettingControl />' src/Desktop/BiliCopilot.UI/Pages/SettingsPage.xaml \
