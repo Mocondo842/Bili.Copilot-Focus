@@ -10,27 +10,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <!-- 每个动作一张 SettingsCard，与「播放器控制」的次级菜单同构；
+         条目在代码里生成（见 ShortcutSettingControl.xaml.cs），这里只留壳。 -->
     <base:SettingsExpander
-        Description="点一下右边方框再按下新键即可改绑；撞键会自动两边对调，改坏了可以全部恢复默认。"
+        x:Name="Exp"
+        Description="查看及修改播放器快捷键"
         Header="播放器快捷键">
         <base:SettingsExpander.HeaderIcon>
             <ic:SymbolIcon Symbol="KeyboardShift" />
         </base:SettingsExpander.HeaderIcon>
-        <base:SettingsExpander.Items>
-            <base:SettingsCard
-                Description="快进 / 快退 / 音量只在播放控制栏隐藏时生效；统计信息覆盖层打开时，数字键 1-5 与上下键交给播放器本身。"
-                Header="按键绑定">
-                <StackPanel x:Name="ShortcutPanel" Spacing="6" />
-            </base:SettingsCard>
-            <base:SettingsCard
-                Description="把所有动作的快捷键恢复成出厂设置。"
-                Header="恢复默认">
-                <Button
-                    x:Name="ResetAllButton"
-                    MinWidth="120"
-                    Click="OnResetAllClick"
-                    Content="全部恢复默认" />
-            </base:SettingsCard>
-        </base:SettingsExpander.Items>
     </base:SettingsExpander>
 </local:SettingsPageControlBase>

@@ -3,6 +3,7 @@
 
 using BiliCopilot.UI.Toolkits;
 using Microsoft.UI.Xaml.Input;
+using Richasy.WinUIKernel.Share.Base;
 using Windows.System;
 
 namespace BiliCopilot.UI.Controls.Settings;
@@ -23,11 +24,62 @@ public sealed partial class ShortcutSettingControl : SettingsPageControlBase
     public ShortcutSettingControl()
     {
         InitializeComponent();
-        BuildRows();
+        BuildItems();
     }
 
     /// <inheritdoc/>
     protected override void OnControlLoaded() => RefreshBoxes();
+
+    private void BuildItems()
+    {
+        // 条目必须在展开器套用模板之前放进 Items：模板只在 OnApplyTemplate 里读一次这个列表，
+        // 之后再改列表不会刷新界面（ItemsRepeater 的 ItemsSource 是普通 List）。
+        foreach (var action in PlayerShortcutToolkit.AllActions)
+        {
+            var box = CreateShortcutBox(action);
+            _boxes[action] = box;
+            Exp.Items.Add(new SettingsCard
+            {
+                Header = PlayerShortcutToolkit.GetDisplayName(action),
+                Description = PlayerShortcutToolkit.GetDescription(action),
+                Content = box,
+            });
+        }
+
+        Exp.Items.Add(new SettingsCard
+        {
+            Header = "恢复默认",
+            Description = "把所有动作的快捷键恢复成出厂设置",
+            Content = CreateResetButton(),
+        });
+    }
+
+    private TextBox CreateShortcutBox(PlayerShortcutAction action)
+    {
+        var box = new TextBox
+        {
+            Text = PlayerShortcutToolkit.Format(PlayerShortcutToolkit.Get(action)),
+            IsReadOnly = true,
+            MinWidth = 140,
+            TextAlignment = TextAlignment.Center,
+            Tag = action,
+        };
+        box.GotFocus += OnShortcutBoxGotFocus;
+        box.LostFocus += OnShortcutBoxLostFocus;
+        box.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(OnShortcutBoxKeyDown), true);
+        return box;
+    }
+
+    private Button CreateResetButton()
+    {
+        var button = new Button
+        {
+            Content = "全部恢复默认",
+            MinWidth = 140,
+        };
+        button.Click += OnResetAllClick;
+        return button;
+    }
 
     private void RefreshBoxes()
     {
@@ -37,40 +89,6 @@ public sealed partial class ShortcutSettingControl : SettingsPageControlBase
             {
                 pair.Value.Text = PlayerShortcutToolkit.Format(PlayerShortcutToolkit.Get(pair.Key));
             }
-        }
-    }
-
-    private void BuildRows()
-    {
-        foreach (var action in PlayerShortcutToolkit.AllActions)
-        {
-            var row = new Grid { ColumnSpacing = 12 };
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-
-            var label = new TextBlock
-            {
-                Text = PlayerShortcutToolkit.GetDisplayName(action),
-                VerticalAlignment = VerticalAlignment.Center,
-            };
-
-            var box = new TextBox
-            {
-                Text = PlayerShortcutToolkit.Format(PlayerShortcutToolkit.Get(action)),
-                IsReadOnly = true,
-                MinWidth = 140,
-                TextAlignment = TextAlignment.Center,
-                Tag = action,
-            };
-            box.GotFocus += OnShortcutBoxGotFocus;
-            box.LostFocus += OnShortcutBoxLostFocus;
-            box.AddHandler(UIElement.KeyDownEvent, new KeyEventHandler(OnShortcutBoxKeyDown), true);
-
-            Grid.SetColumn(box, 1);
-            row.Children.Add(label);
-            row.Children.Add(box);
-            _boxes[action] = box;
-            ShortcutPanel.Children.Add(row);
         }
     }
 

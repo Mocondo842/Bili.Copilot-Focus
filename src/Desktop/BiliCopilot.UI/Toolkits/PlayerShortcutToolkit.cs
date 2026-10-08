@@ -184,6 +184,36 @@ internal static class PlayerShortcutToolkit
         };
 
     /// <summary>
+    /// 动作说明（设置页次级菜单的描述，只陈述功能）。
+    /// </summary>
+    /// <param name="action">动作.</param>
+    /// <returns>描述文本.</returns>
+    internal static string GetDescription(PlayerShortcutAction action)
+        => action switch
+        {
+            PlayerShortcutAction.PlayPause => "切换播放与暂停",
+            PlayerShortcutAction.SkipForward => "向后跳过一段时间（播放控制栏隐藏时生效）",
+            PlayerShortcutAction.SkipBackward => "向前跳过一段时间（播放控制栏隐藏时生效）",
+            PlayerShortcutAction.VolumeUp => "提高音量（播放控制栏隐藏时生效）",
+            PlayerShortcutAction.VolumeDown => "降低音量（播放控制栏隐藏时生效）",
+            PlayerShortcutAction.SpeedUp => "提高播放速度",
+            PlayerShortcutAction.SpeedDown => "降低播放速度",
+            PlayerShortcutAction.NextVideo => "切换到下一个视频",
+            PlayerShortcutAction.PreviousVideo => "切换到上一个视频",
+            PlayerShortcutAction.ToggleMute => "切换静音状态",
+            PlayerShortcutAction.ToggleSubtitle => "显示或隐藏字幕",
+            PlayerShortcutAction.ToggleTopMost => "切换窗口置顶状态",
+            PlayerShortcutAction.TakeScreenshot => "保存当前画面",
+            PlayerShortcutAction.ToggleFullScreen => "进入或退出全屏",
+            PlayerShortcutAction.ToggleCompactOverlay => "进入或退出画中画窗口",
+            PlayerShortcutAction.PreviousChapter => "跳到上一章节",
+            PlayerShortcutAction.NextChapter => "跳到下一章节",
+            PlayerShortcutAction.ToggleStats => "显示或隐藏播放统计覆盖层",
+            PlayerShortcutAction.ExitDefaultMode => "回到默认显示状态（退出全屏 / 画中画 / 扩展面板）",
+            _ => string.Empty,
+        };
+
+    /// <summary>
     /// 动作的默认快捷键。
     /// </summary>
     /// <param name="action">动作.</param>

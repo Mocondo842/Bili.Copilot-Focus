@@ -46,6 +46,7 @@ Check 'PlayerShortcutToolkit.Set(action, shortcut)' 1 'S3 设置页写入新绑�
 Check 'AppToolkit.IsCodecMatch(' 2 'S5 编码偏好按编码族匹配（两个 resolver）'
 Check 'IsSubtitleEnabled = !IsSubtitleEnabled;' 1 'S6 字幕开关快捷键只翻转开关'
 Check 'ApplySubtitleEnabledAsync(value)' 1 'S7 字幕显隐走单独的应用路径'
+Check 'PlayerShortcutToolkit.GetDescription(action)' 1 'S8 每个动作一条次级菜单（带描述）'
 
 # 快捷键设置控件必须挂在设置页上（XAML 不在 Check 的搜索范围内，单独查）
 if (-not (Select-String -Path 'src/Desktop/BiliCopilot.UI/Pages/SettingsPage.xaml' -SimpleMatch -Pattern '<settings:ShortcutSettingControl />')) {
