@@ -594,8 +594,14 @@ public sealed partial class PlayerViewModel
             }
 
             // 强制关闭可能开启的统计信息覆盖层.
-            await Client!.SendKeyPressAsync("ESC");
-            IsStatsOverlayShown = false;
+            // fork：原来这里是 SendKeyPressAsync("ESC")。播放器以 UseConfig=false 启动，mpv 不带内置按键表，
+            // ESC 从来没被处理过，只会在日志里留下「No key binding found for key 'ESC'」。
+            // 改用播放器自己的接口，只在界面认为覆盖层开着的时候关一次。
+            if (IsStatsOverlayShown)
+            {
+                await Client!.ToggleStatsOverlayAsync();
+                IsStatsOverlayShown = false;
+            }
 
             // Make sure playing.
             if (Player.PlaybackState != MpvPlayerState.Playing)
@@ -702,7 +708,9 @@ public sealed partial class PlayerViewModel
             return;
         }
 
-        if (args.VirtualKey == Windows.System.VirtualKey.Right && !_isRightKeyDown && AppToolkit.NotModifierKeyPressed())
+        if (args.VirtualKey == Windows.System.VirtualKey.Right
+            && !_isRightKeyDown
+            && PlayerShortcutToolkit.Get(PlayerShortcutAction.SkipForward) is { Key: Windows.System.VirtualKey.Right, Ctrl: false, Shift: false, Alt: false })
         {
             _isRightKeyDown = true;
             _isRightKeyTripleSpeed = false;
@@ -717,9 +725,12 @@ public sealed partial class PlayerViewModel
             return;
         }
 
-        if (args.VirtualKey == Windows.System.VirtualKey.Escape)
+        // fork：按键先过一遍快捷键表，因此「退出默认模式」可以改绑到别的键。
+        var matched = PlayerShortcutToolkit.TryMatch(args.VirtualKey, out var action);
+        if (matched && action == PlayerShortcutAction.ExitDefaultMode)
         {
             BackToDefaultModeCommand.Execute(default);
+            return;
         }
 
         if (Player is null || Player.PlaybackState == MpvPlayerState.Idle || Player.PlaybackState == MpvPlayerState.End)
@@ -742,100 +753,82 @@ public sealed partial class PlayerViewModel
             }
         }
 
-        if (args.VirtualKey == Windows.System.VirtualKey.Space)
+        if (!matched)
         {
-            PlayPauseCommand.Execute(default);
+            return;
         }
-        else if (args.VirtualKey == Windows.System.VirtualKey.Right)
+
+        switch (action)
         {
-            _rightKeyLongPressTimer?.Stop();
-            if (_isRightKeyTripleSpeed)
-            {
-                _isRightKeyTripleSpeed = false;
-                await Client!.SetSpeedAsync(_lastSpeed);
-                LastSpeedChangingTime = DateTimeOffset.Now;
-                IsSpeedChanging = true;
-            }
-            else
-            {
-                if (AppToolkit.IsOnlyCtrlPressed())
+            case PlayerShortcutAction.PlayPause:
+                PlayPauseCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.SkipForward:
+                _rightKeyLongPressTimer?.Stop();
+                if (_isRightKeyTripleSpeed)
                 {
-                    IncreaseSpeedCommand.Execute(default);
+                    _isRightKeyTripleSpeed = false;
+                    await Client!.SetSpeedAsync(_lastSpeed);
+                    LastSpeedChangingTime = DateTimeOffset.Now;
+                    IsSpeedChanging = true;
                 }
-                else if (AppToolkit.IsOnlyShiftPressed())
-                {
-                    if (IsNextButtonEnabled)
-                    {
-                        PlayNextCommand.Execute(default);
-                    }
-                }
-                else if (!IsControlsVisible && AppToolkit.NotModifierKeyPressed())
+                else if (!IsControlsVisible)
                 {
                     SkipForwardCommand.Execute(default);
                 }
-            }
 
-            _isRightKeyDown = false;
-        }
-        else if (args.VirtualKey == Windows.System.VirtualKey.Left)
-        {
-            if (AppToolkit.IsOnlyCtrlPressed())
-            {
-                DecreaseSpeedCommand.Execute(default);
-            }
-            else if (AppToolkit.IsOnlyShiftPressed())
-            {
-                if (IsPrevButtonEnabled)
-                {
-                    PlayPreviousCommand.Execute(default);
-                }
-            }
-            else if (!IsControlsVisible && AppToolkit.NotModifierKeyPressed())
-            {
+                _isRightKeyDown = false;
+                break;
+            case PlayerShortcutAction.SkipBackward when !IsControlsVisible:
                 SkipBackwardCommand.Execute(default);
-            }
-        }
-        else if (args.VirtualKey == Windows.System.VirtualKey.Up)
-        {
-            if (AppToolkit.IsOnlyCtrlPressed())
-            {
-                IncreaseSpeedCommand.Execute(default);
-            }
-            else if (!IsControlsVisible && AppToolkit.NotModifierKeyPressed())
-            {
+                break;
+            case PlayerShortcutAction.VolumeUp when !IsControlsVisible:
                 IncreaseVolumeCommand.Execute(default);
-            }
-        }
-        else if (args.VirtualKey == Windows.System.VirtualKey.Down)
-        {
-            if (AppToolkit.IsOnlyCtrlPressed())
-            {
-                DecreaseSpeedCommand.Execute(default);
-            }
-            else if (!IsControlsVisible && AppToolkit.NotModifierKeyPressed())
-            {
+                break;
+            case PlayerShortcutAction.VolumeDown when !IsControlsVisible:
                 DecreaseVolumeCommand.Execute(default);
-            }
-        }
-        else if (args.VirtualKey == Windows.System.VirtualKey.F11)
-        {
-            ToggleFullScreenCommand.Execute(default);
-        }
-        else if (args.VirtualKey == Windows.System.VirtualKey.M && AppToolkit.IsOnlyCtrlPressed())
-        {
-            ToggleCompactOverlayCommand.Execute(default);
-        }
-        else if (args.VirtualKey == Windows.System.VirtualKey.PageUp)
-        {
-            SwitchToPreviousChapterCommand.Execute(default);
-        }
-        else if (args.VirtualKey == Windows.System.VirtualKey.PageDown)
-        {
-            SwitchToNextChapterCommand.Execute(default);
-        }
-        else if (args.VirtualKey == Windows.System.VirtualKey.I)
-        {
-            ToggleStatsOverlayCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.SpeedUp:
+                IncreaseSpeedCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.SpeedDown:
+                DecreaseSpeedCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.NextVideo when IsNextButtonEnabled:
+                PlayNextCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.PreviousVideo when IsPrevButtonEnabled:
+                PlayPreviousCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.ToggleMute:
+                ToggleMuteStateCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.ToggleSubtitle:
+                ToggleSubtitleEnabledCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.ToggleTopMost:
+                ToggleTopMostCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.TakeScreenshot:
+                TakeScreenshotCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.ToggleFullScreen:
+                ToggleFullScreenCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.ToggleCompactOverlay:
+                ToggleCompactOverlayCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.PreviousChapter:
+                SwitchToPreviousChapterCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.NextChapter:
+                SwitchToNextChapterCommand.Execute(default);
+                break;
+            case PlayerShortcutAction.ToggleStats:
+                ToggleStatsOverlayCommand.Execute(default);
+                break;
+            default:
+                break;
         }
     }
 

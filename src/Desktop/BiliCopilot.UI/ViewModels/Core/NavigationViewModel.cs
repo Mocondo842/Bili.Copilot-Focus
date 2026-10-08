@@ -157,6 +157,14 @@ public sealed partial class NavigationViewModel : ViewModelBase, INavServiceView
     /// </summary>
     public void SetNavItemVisibility(Type pageType, bool isVisible)
     {
+        // fork：去推荐化屏蔽的页面任何时候都不放出来。
+        // 上游这条路径是设置页开关的回调：设置页初始化时会按本地设置（全新安装默认可见）回调一次，
+        // 把构造时算好的可见性重新打开——只靠 GetItem 里的判断堵不住，唯一的写入口也要拦。
+        if (DeRecommendToolkit.IsHiddenPage(pageType))
+        {
+            isVisible = false;
+        }
+
         var item = MenuItems.Find(p => p.PageKey == pageType.FullName);
         item?.IsVisible = isVisible;
     }

@@ -25,6 +25,7 @@
 | G5 | `.../ViewModels/Core/NavigationViewModel.cs` | 被屏蔽的 6 个推流页**强制不可见**：`GetItem` 不再读 `Is{Page}Visible` 设置（1 行） |
 | G6 | `.../Pages/SettingsPage.xaml` | 移除「侧边导航栏设置」「搜索推荐」两个设置卡片（2 行改成注释），控件与设置项本身都保留 |
 | G7 | `.../ViewModels/Components/SearchBoxViewModel/SearchBoxViewModel.cs` | 搜索推荐词在去推荐化下**一律不请求**，与设置值无关（1 行） |
+| G8 | `.../ViewModels/Core/NavigationViewModel.cs` + `.../ViewModels/View/SettingsPageViewModel/SettingsPageViewModel.cs` | 推流页可见性的**写入口**也拦一道：`SetNavItemVisibility` / `WriteNavVisibleSetting` 遇到被屏蔽的页面一律按 `false` 处理 |
 
 `DeRecommendToolkit.IsEmptyMoment()` 的三条判据必须同时成立才丢：`MomentType is null or Unsupported`、`Data is null`、`Description is null`。这样纯文本动态（带 Description）不会被误伤——只按 `Data is null` 过滤会连纯文本一起丢。
 
@@ -33,11 +34,14 @@
 早期版本要求你进设置里手动关掉 6 个推流页；现在**改设置也放不回来**：
 
 - 6 个整页级推流面在 `NavigationViewModel.GetItem` 里被强制隐藏（不读 `Is{Page}Visible`）；
+- 可见性的**写入口**（`SetNavItemVisibility`、`WriteNavVisibleSetting`）同样拦截：设置页初始化时会按本地设置
+  （全新安装默认可见）回调一次，只挡住 `GetItem` 的话，进一次设置页这 6 个页面就会被重新打开——
+  而设置卡片已经没了，等于**再也关不掉**。现在这两处遇到被屏蔽的页面一律按 `false` 处理；
 - 「侧边导航栏设置」与「搜索推荐」两张设置卡片已从设置界面移除（`Pages/SettingsPage.xaml`），控件与设置项本身都还在仓库里，只是没入口；
 - 搜索推荐词、热搜榜都被代码拦在请求之前；
 - 「播放完自动播放推荐视频」即使被打开也无效果——推荐区块已不再加入播放页。
 
-## 另外修掉的四个问题（都不属于上游行为，是本 fork 的增量）
+## 另外修掉的问题（都不属于上游行为，是本 fork 的增量）
 
 | 编号 | 问题 | 改动 |
 |---|---|---|
@@ -45,8 +49,16 @@
 | F2 | 托盘菜单「退出」不保证进程结束 | `App.ExitApp()` 结尾补 `Environment.Exit(0)` |
 | F3 | 托盘图标点一下 / 二次启动唤不回藏在托盘里的窗口 | `App.xaml.cs` 两处改成 `AppWindow.Show()` + `Activate()` |
 | F4 | 视频偶发「没声音，退出重进才好」：日志里是可播放地址打不开（`mcdn.bilivideo.cn` 这类 PCDN 节点） | 「不使用 P2P」默认改为开（两个 resolver + 设置项默认值），流地址优先选非 PCDN 节点；想改回来在播放器设置里关掉即可 |
+| F5 | 日志里每次起播都有一条 `warn - No key binding found for key 'ESC'` | 播放器以 `UseConfig=false` 启动 mpv（不带内置按键表），原来每次起播都往 mpv 发一次 `ESC` 想关统计覆盖层——mpv 不认识这个键，只留下这条 warn。改为只在界面认为覆盖层开着时调用播放器自己的 `ToggleStatsOverlayAsync()` |
+| S1 | 快捷键只有方向键和空格，且写死在代码里 | 新增 `Toolkits/PlayerShortcutToolkit.cs`：19 个动作（播放/快进/快退/音量±/倍速±/上一个下一个/静音/字幕/置顶/截图/全屏/紧凑窗口/章节±/统计/退出默认模式）的默认键 + 本地设置读写 + 冲突对调；`PlayerViewModel` 的按键处理改成查表分发，设置页新增「播放器快捷键」卡片，点框→按新键即可改绑 |
 
 > `AUDCLNT_E_DEVICE_INVALIDATED` 是 WASAPI 音频端点被系统回收（切设备/蓝牙断开/休眠）时报的错，音频输出重建由 libmpv 的 wasapi AO 负责，不在应用层；这块没动。F4 针对的是同一条日志里那串音频流地址打开失败的报错。
+
+快捷键（S1）的三条既有行为照旧保留，改动只把「按键 → 动作」这段变成可配置：
+
+- 快进 / 快退 / 音量只在**播放控制栏隐藏**时生效（控制栏显示时方向键要留给界面焦点）；
+- 统计信息覆盖层打开时，数字键 `1`-`5`、上下键交给播放器本身（`stats.lua` 的强制绑定）；
+- 长按右方向键三倍速只在「快进」仍绑在右方向键上时才触发。
 
 ## 安装器（fork 自带，替代上游 Install.ps1）
 

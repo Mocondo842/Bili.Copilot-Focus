@@ -358,6 +358,12 @@ public sealed partial class SettingsPageViewModel : AISettingsViewModelBase
 
     private void WriteNavVisibleSetting(Type pageType, bool isVisible)
     {
+        // fork：去推荐化屏蔽的页面连设置也不许写成可见（否则手改设置文件就能把推流页放回来）。
+        if (DeRecommendToolkit.IsHiddenPage(pageType))
+        {
+            isVisible = false;
+        }
+
         this.Get<ISettingsToolkit>().WriteLocalSetting($"Is{pageType.Name}Visible", isVisible);
         this.Get<NavigationViewModel>().SetNavItemVisibility(pageType, isVisible);
     }

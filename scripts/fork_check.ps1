@@ -22,14 +22,41 @@ if (-not (Test-Path 'src/Desktop/BiliCopilot.UI/Toolkits/DeRecommendToolkit.cs')
     $fail = 1
 }
 
+foreach ($file in @(
+    'src/Desktop/BiliCopilot.UI/Toolkits/PlayerShortcutToolkit.cs',
+    'src/Desktop/BiliCopilot.UI/Controls/Settings/ShortcutSettingControl.xaml')) {
+    if (-not (Test-Path $file)) {
+        Write-Host "MISSING FILE: $file"
+        $fail = 1
+    }
+}
+
 Check '!DeRecommendToolkit.Disabled && _view.Recommends is not null' 1 'G1 播放页推荐区块守卫'
 Check 'DeRecommendToolkit.Disabled || HotSearchItems.Count > 0' 1 'G2 热搜请求守卫'
 Check '!DeRecommendToolkit.IsEmptyMoment(p)' 4 'G3 动态空条目过滤（4 处）'
 Check '!DeRecommendToolkit.IsHiddenPage(typeof(TPage))' 1 'G5 导航项强制隐藏（不读设置）'
 Check 'DeRecommendToolkit.Disabled || !isRecommendEnabled' 1 'G7 搜索推荐词强制不请求'
+Check 'DeRecommendToolkit.IsHiddenPage(pageType)' 2 'G8 推流页可见性写入口拦截（导航 + 设置页）'
 Check 'Players.Any(p => p.Window is not null)' 1 'F1 关窗规则（仅独立播放器窗口时收托盘）'
 Check 'SettingNames.PlayWithoutP2P, true' 2 'F4 默认避开 PCDN 节点（两个 resolver）'
 Check 'AppWindow.Show();' 2 'F3 单实例/托盘唤回窗口'
+Check 'PlayerShortcutToolkit.TryMatch(args.VirtualKey, out var action)' 1 'S1 播放器按键改走快捷键表'
+Check 'PlayerShortcutToolkit.Get(PlayerShortcutAction.SkipForward)' 1 'S2 长按三倍速跟随「快进」的绑定'
+Check 'PlayerShortcutToolkit.Set(action, shortcut)' 1 'S3 设置页写入新绑定'
+
+# 快捷键设置控件必须挂在设置页上（XAML 不在 Check 的搜索范围内，单独查）
+if (-not (Select-String -Path 'src/Desktop/BiliCopilot.UI/Pages/SettingsPage.xaml' -SimpleMatch -Pattern '<settings:ShortcutSettingControl />')) {
+    Write-Host 'MISSING ANCHOR: S4 快捷键设置控件没挂在设置页上'
+    $fail = 1
+}
+
+# 反向检查：不该再向 mpv 发送没有绑定的 ESC（只看代码行，注释里提到不算）
+$staleEsc = (Get-ChildItem -Path src -Recurse -Filter *.cs |
+             Select-String -Pattern '^\s*(await )?Client!?\.SendKeyPressAsync\("ESC"\)').Count
+if ($staleEsc -gt 0) {
+    Write-Host 'UNEXPECTED: 仍在向 mpv 发送没有绑定的 ESC（见 FORK.md F5）'
+    $fail = 1
+}
 
 if ($fail -eq 0) {
     Write-Host 'fork_check: OK (all anchors present)'

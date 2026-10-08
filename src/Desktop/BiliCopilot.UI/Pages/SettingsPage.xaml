@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 <local:SettingsPageBase
     x:Class="BiliCopilot.UI.Pages.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -51,6 +51,8 @@
                     HorizontalAlignment="Left"
                     Text="{ext:Locale Name=Player}" />
                 <settings:PlayerControlSettingControl />
+                <!-- fork：播放器快捷键改成可配置，见 Toolkits/PlayerShortcutToolkit.cs -->
+                <settings:ShortcutSettingControl />
                 <settings:PlayerBehaviorSettingControl />
                 <settings:MpvExtraSettingControl />
                 <settings:ScreenshotSettingControl />
