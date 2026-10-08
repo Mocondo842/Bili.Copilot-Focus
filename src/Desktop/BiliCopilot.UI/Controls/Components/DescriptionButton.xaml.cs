@@ -11,7 +11,7 @@ namespace BiliCopilot.UI.Controls.Components;
 /// 简介按钮. 点击后立刻打开浮出层（取回期间显示等待文案），再按需向服务端取一次视频简介并回填.
 /// 弹层不依赖命令绑定——模板里的经典绑定取不到命令属性；浮层内容全部走代码.
 /// </summary>
-public sealed partial class DescriptionButton : LayoutUserControlBase<VideoItemViewModel>
+public sealed partial class DescriptionButton : DescriptionButtonBase
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="DescriptionButton"/> class.
@@ -27,8 +27,8 @@ public sealed partial class DescriptionButton : LayoutUserControlBase<VideoItemV
             return;
         }
 
+        // 浮层由 Button.Flyout 在点击时打开，这里先把文案换成等待提示.
         FlyoutTextBlock.Text = ResourceToolkit.GetLocalizedString(StringNames.LoadingAndWait);
-        FlyoutBase.ShowAttachedFlyout(DescriptionBtn);
         var description = await video.EnsureDescriptionAsync();
         if (!ReferenceEquals(video, ViewModel))
         {
@@ -40,4 +40,11 @@ public sealed partial class DescriptionButton : LayoutUserControlBase<VideoItemV
             ? ResourceToolkit.GetLocalizedString(StringNames.NoSpecificData)
             : description;
     }
+}
+
+/// <summary>
+/// 简介按钮基类.
+/// </summary>
+public abstract class DescriptionButtonBase : LayoutUserControlBase<VideoItemViewModel>
+{
 }

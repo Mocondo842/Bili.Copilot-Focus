@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<base:LayoutUserControlBase
+<local:DescriptionButtonBase
     x:Class="BiliCopilot.UI.Controls.Components.DescriptionButton"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:base="using:Richasy.WinUIKernel.Share.Base"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:ext="using:BiliCopilot.UI.Extensions"
     xmlns:ic="using:FluentIcons.WinUI"
@@ -19,7 +18,7 @@
             Style="{StaticResource IconButtonStyle}"
             ToolTipService.ToolTip="{ext:Locale Name=Description}">
             <ic:SymbolIcon FontSize="12" Symbol="Feed" />
-            <FlyoutBase.AttachedFlyout>
+            <Button.Flyout>
                 <Flyout Placement="Bottom">
                     <TextBlock
                         x:Name="FlyoutTextBlock"
@@ -28,7 +27,7 @@
                         LineHeight="24"
                         TextWrapping="Wrap" />
                 </Flyout>
-            </FlyoutBase.AttachedFlyout>
+            </Button.Flyout>
         </Button>
     </Grid>
-</base:LayoutUserControlBase>
+</local:DescriptionButtonBase>
