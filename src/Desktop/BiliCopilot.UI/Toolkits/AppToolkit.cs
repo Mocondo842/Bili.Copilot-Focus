@@ -3,6 +3,7 @@
 using BiliCopilot.UI.Models.Constants;
 using Microsoft.Extensions.Logging;
 using Richasy.WinUIKernel.Share.Toolkits;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -16,6 +17,16 @@ namespace BiliCopilot.UI.Toolkits;
 /// </summary>
 internal sealed partial class AppToolkit : SharedAppToolkit
 {
+    private static readonly ConcurrentDictionary<string, CultureInfo> CultureCache = new();
+
+    /// <summary>
+    /// 取区域性对象（按语言缓存，避免每个列表条目都 new 一个）.
+    /// </summary>
+    /// <param name="languageName">语言名.</param>
+    /// <returns>区域性对象.</returns>
+    public static CultureInfo GetCulture(string languageName)
+        => CultureCache.GetOrAdd(languageName, static name => new CultureInfo(name));
+
     private const int VK_LCONTROL = 0xA2; // 左Ctrl键
     private const int VK_RCONTROL = 0xA3; // 右Ctrl键
     private const int VK_SHIFT = 0x10; // Shift键

@@ -12,7 +12,6 @@ using Richasy.BiliKernel.Bili.User;
 using Richasy.BiliKernel.Models.Article;
 using Richasy.WinUIKernel.Share.Base;
 using Richasy.WinUIKernel.Share.ViewModels;
-using System.Globalization;
 using Windows.Globalization;
 using WinRT;
 
@@ -24,6 +23,7 @@ namespace BiliCopilot.UI.ViewModels.Items;
 [GeneratedBindableCustomProperty]
 public sealed partial class ArticleItemViewModel : ViewModelBase<ArticleInformation>
 {
+
     private readonly Action<ArticleItemViewModel>? _removeAction;
 
     /// <summary>
@@ -38,7 +38,7 @@ public sealed partial class ArticleItemViewModel : ViewModelBase<ArticleInformat
         Cover = data.Identifier.Cover?.Uri;
         Author = data.Publisher?.Name;
         Avatar = data.Publisher?.Avatar?.Uri;
-        PublishRelativeTime = data.PublishDateTime.Humanize(culture: new CultureInfo(primaryLan));
+        PublishRelativeTime = data.PublishDateTime.Humanize(culture: AppToolkit.GetCulture(primaryLan));
         LikeCount = data.CommunityInformation?.LikeCount;
         Style = style;
         var collectTime = data.GetExtensionIfNotNull<DateTimeOffset?>(ArticleExtensionDataId.CollectTime);

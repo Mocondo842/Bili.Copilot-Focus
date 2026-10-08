@@ -66,6 +66,13 @@ public partial class App : Application
             instance.Activated += OnInstanceActivated;
             Richasy.WinUIKernel.Share.Base.ImageExBase.EnableBackgroundDecoding = false;
             GlobalDependencies.Initialize();
+
+            // fork：卡片动画开关（默认 true，行为与上游一致）；关掉后长列表滚动开销更小。
+            Richasy.WinUIKernel.Share.WinUIKernelShareExtensions.IsCardAnimationEnabled =
+                GlobalDependencies.Kernel.GetRequiredService<Richasy.WinUIKernel.Share.Toolkits.ISettingsToolkit>().ReadLocalSetting("IsCardAnimationEnabled", true);
+
+            // fork：UI 线程卡顿看门狗（计时与写日志都在线程池线程，卡死时也能出日志）。
+            BiliCopilot.UI.Toolkits.UiStallWatchdog.Start();
             GlobalDependencies.Kernel.GetRequiredService<AppViewModel>().LaunchCommand.Execute(default);
         }
         else
@@ -121,6 +128,9 @@ public partial class App : Application
 
     private void ExitApp()
     {
+        BiliCopilot.UI.Toolkits.UiStallWatchdog.Stop();
+        // fork：日志走异步队列，退出前必须刷盘，否则最后几条（含卡顿行）会留在队列里。
+        Serilog.Log.CloseAndFlush();
         TrayIcon?.Dispose();
         TrayIcon = null;
         _notificationManager?.Unregister();

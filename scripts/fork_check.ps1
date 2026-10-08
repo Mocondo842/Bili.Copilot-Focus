@@ -59,6 +59,15 @@ Check '_likeButton.Command = ViewModel?.ToggleLikeCommand;' 1 'C8 点赞命令�
 Check '_commentButton.Command = ViewModel?.ShowCommentCommand;' 1 'C9 评论命令在 code-behind 赋值'
 Check 'ReferenceEquals(video, ViewModel)' 1 'C10 取回后校验按钮是否已被列表回收'
 Check 'public VideoItemViewModel? InnerVideo' 1 'C11 用户空间视频卡片复用内层视频取简介'
+Check 'Interlocked.Exchange(ref _stallStartTicks, ackTicks);' 1 'U1 卡顿起点取最近一次 UI 回调时刻'
+Check 'UI 线程恢复响应，本次卡顿累计约' 1 'U2b 恢复后补报总时长'
+Check 'UI 看门狗已启动' 1 'U2 看门狗启动有日志'
+Check 'UiStallWatchdog.Start();' 1 'U3 启动时拉起看门狗'
+Check 'UiStallWatchdog.Stop();' 1 'U4 退出时停看门狗'
+Check 'WriteTo.Async(a => a.File(' 1 'U5 日志异步落盘'
+Check 'IsCardAnimationEnabled' 2 'U6 卡片动画开关接入启动路径'
+Check 'AppToolkit.GetCulture(primaryLan)' 2 'U7 区域性对象按语言缓存'
+Check 'EmojiRegex' 2 'U8 表情正则提为静态'
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 Check 的搜索范围内，单独查）
 foreach ($item in @(
@@ -67,6 +76,11 @@ foreach ($item in @(
     @('src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml', '<local:DescriptionButton', 'C14 搜索卡片简介按钮'),
     @('src/Desktop/BiliCopilot.UI/Controls/Components/MomentCardControl/PersonalVideoMomentPresenter.xaml', 'ViewModel.InnerVideo', 'C15 用户空间卡片简介按钮'),
     @('src/Desktop/BiliCopilot.UI/Controls/Comment/CommentItemControl.xaml', 'MaxLines="0"', 'C16 评论不截断'),
+    @('src/Directory.Packages.props', 'Version="1.8.260921001"', 'U9 WindowsAppSDK 升到 1.8 同线最新'),
+    @('src/Directory.Packages.props', 'Serilog.Sinks.Async', 'U10 异步日志包已声明'),
+    @('src/Desktop/BiliCopilot.UI/BiliCopilot.UI.csproj', 'Serilog.Sinks.Async', 'U11 异步日志包已被引用'),
+    @('src/Desktop/BiliCopilot.UI/App.xaml.cs', 'Log.CloseAndFlush();', 'U12 退出前刷日志队列'),
+    @('src/Desktop/BiliCopilot.UI/Toolkits/UiStallWatchdog.cs', 'UI 看门狗', 'U13 看门狗文件就位'),
     @('src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml', '<comment:CommentOverlayPanel', 'C17 搜索页评论浮层'))) {
     if (-not (Select-String -Path $item[0] -SimpleMatch -Pattern $item[1])) {
         Write-Host "MISSING ANCHOR: $($item[2])"

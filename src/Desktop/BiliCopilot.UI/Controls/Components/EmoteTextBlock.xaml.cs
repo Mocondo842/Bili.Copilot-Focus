@@ -14,6 +14,8 @@ namespace BiliCopilot.UI.Controls.Components;
 /// </summary>
 public sealed partial class EmoteTextBlock : LayoutUserControlBase
 {
+    private static readonly Regex EmojiRegex = new(@"(\[.*?\])");
+
     /// <summary>
     /// <see cref="MaxLines"/> 的依赖属性.
     /// </summary>
@@ -117,7 +119,7 @@ public sealed partial class EmoteTextBlock : LayoutUserControlBase
         if (emotes != null && emotes.Count > 0)
         {
             // 有表情存在，进行处理.
-            var emojiRegex = new Regex(@"(\[.*?\])");
+            var emojiRegex = EmojiRegex;
             var splitContents = emojiRegex.Split(text).Where(p => p.Length > 0).ToArray();
             foreach (var content in splitContents)
             {

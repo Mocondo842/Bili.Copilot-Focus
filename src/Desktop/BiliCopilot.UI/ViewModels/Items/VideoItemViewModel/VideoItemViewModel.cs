@@ -26,6 +26,8 @@ namespace BiliCopilot.UI.ViewModels.Items;
 [GeneratedBindableCustomProperty]
 public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
 {
+    private static readonly CultureInfo ChineseCulture = new("zh-CN");
+
     private readonly Action<VideoItemViewModel>? _removeAction;
     private readonly VideoFavoriteFolder? _favFolder;
     private readonly Action<VideoItemViewModel>? _playAction;
@@ -56,7 +58,7 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
         Author = info.Publisher?.User?.Name;
         Avatar = info.Publisher?.User?.Avatar?.Uri;
         Duration = AppToolkit.FormatDuration(TimeSpan.FromSeconds(info.Duration ?? 0));
-        PublishRelativeTime = info.PublishTime?.Humanize(culture: new CultureInfo(primaryLan));
+        PublishRelativeTime = info.PublishTime?.Humanize(culture: AppToolkit.GetCulture(primaryLan));
         PlayCount = info.CommunityInformation?.PlayCount;
         DanmakuCount = info.CommunityInformation?.DanmakuCount;
         LikeCount = info.CommunityInformation?.LikeCount;
@@ -65,7 +67,7 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
         TagName = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.TagName);
         RecommendReason = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.RecommendReason);
         Subtitle = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.Subtitle);
-        CollectTime = info.GetExtensionIfNotNull<DateTimeOffset>(VideoExtensionDataId.CollectTime).Humanize(default, new CultureInfo("zh-CN"));
+        CollectTime = info.GetExtensionIfNotNull<DateTimeOffset>(VideoExtensionDataId.CollectTime).Humanize(default, ChineseCulture);
         IsUserValid = info.Publisher?.User is not null;
         var progress = info.GetExtensionIfNotNull<int?>(VideoExtensionDataId.Progress);
         if (progress is not null)

@@ -192,9 +192,10 @@ internal static class GlobalDependencies
             Directory.CreateDirectory(loggerPath);
         }
 
-        // Create a logger with current date.
+        // 日志走异步队列：写盘不在调用线程（含 UI 线程）上做，避免打日志引起卡顿。
+        // 强杀进程时只会丢异步队列里尚未写出的极少数几条（毫秒级窗口），正常退出走 Log.CloseAndFlush()。
         Log.Logger = new LoggerConfiguration()
-            .WriteTo.File(Path.Combine(loggerPath, $"log-{DateTimeOffset.Now:yyyy-MM-dd}.txt"))
+            .WriteTo.Async(a => a.File(Path.Combine(loggerPath, $"log-{DateTimeOffset.Now:yyyy-MM-dd}.txt")), bufferSize: 10000, blockWhenFull: false)
             .CreateLogger();
 
         builder.Services.AddLogging(b => b.AddSerilog(dispose: true));
