@@ -3,6 +3,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Richasy.BiliKernel.Models.Search;
 using Richasy.WinUIKernel.Share.ViewModels;
+using WinRT;
 
 namespace BiliCopilot.UI.ViewModels.Items;
 
