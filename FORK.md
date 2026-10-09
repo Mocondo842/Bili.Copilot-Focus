@@ -70,6 +70,10 @@
 | U10 | 默认头像类图片 42 次 404（`static.hdslb.com/.../noface.gif@96w_96h_1c.jpg`） | `static.hdslb.com` 不提供图片尺寸变换，带 `@Ww_Hh_1c.jpg` 后缀必 404（实测去掉后缀 200）；图片请求里对 `static.hdslb.com` 去掉 `@` 之后的后缀 |
 | U11 | 卡顿只知道"卡多久"，不知道是 GC 还是业务代码 | 看门狗在卡顿前后各读一次 `GC.GetTotalPauseDuration()`，恢复行写「其中 GC 暂停 xxxms」——两者接近就是 GC，接近 0 就是 UI 线程上的业务代码 |
 
+| U12 | `TextMemberPath` 触发 `System.NotSupportedException: ICustomProperty support ... SearchSuggestItemViewModel (property 'SearchContent')`，3 次 | 这是 U9 修复引入的回归：`TextMemberPath` 走运行时 XAML 属性查找，而该 VM 没有 `[GeneratedBindableCustomProperty]`。补上该特性，并加 `ToString()` 兜底 |
+| U13 | 默认头像仍 42 次加载失败（`noface.gif` 改成去后缀后仍失败） | 去后缀只是让它 200：`noface.gif` 是 **GIF**，而图片解码端只吃 JPEG。改为把默认头像重写到 `i0.hdslb.com/bfs/face/member/noface.jpg`（支持尺寸后缀，实测 200 image/jpeg） |
+| U14 | 卡顿是 GC 还是业务代码（`其中 GC 暂停 0ms` × 5） | 已定论：**不是 GC**，全部为 UI 线程上的业务代码。下一轮用"关弹幕 A/B"区分弹幕渲染与列表渲染 |
+
 > 阶段 B/C 未做（如 `Richasy.WinUIKernel.Share` preview4、FluentIcons 2.x、AgentKernel preview6、按实测卡顿点做的针对性优化）：理由与验收口径见设计文档 `.engine/cross-review-upgrade/draft.md`。
 
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |

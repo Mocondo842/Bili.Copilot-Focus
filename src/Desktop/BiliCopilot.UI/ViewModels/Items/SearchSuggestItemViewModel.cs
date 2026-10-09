@@ -9,6 +9,7 @@ namespace BiliCopilot.UI.ViewModels.Items;
 /// <summary>
 /// 搜索建议项视图模型.
 /// </summary>
+[GeneratedBindableCustomProperty]
 public sealed partial class SearchSuggestItemViewModel : ViewModelBase
 {
     [ObservableProperty]
@@ -16,6 +17,9 @@ public sealed partial class SearchSuggestItemViewModel : ViewModelBase
 
     [ObservableProperty]
     private string? _regionName;
+
+    /// <inheritdoc/>
+    public override string ToString() => SearchContent;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SearchSuggestItemViewModel"/> class.

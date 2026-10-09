@@ -61,14 +61,21 @@ internal static class InternalHttpExtensions
                 request.RequestUri = new UriBuilder(request.RequestUri) { Scheme = Uri.UriSchemeHttps, Port = -1 }.Uri;
             }
 
-            // static.hdslb.com 不提供图片尺寸变换：带上 @Ww_Hh_1c.jpg 后缀会 404（实测 noface.gif 去掉后缀即 200），
-            // 去掉后缀再请求。
+            // static.hdslb.com 不提供图片尺寸变换：带上 @Ww_Hh_1c.jpg 后缀会 404（实测 noface.gif 去掉后缀即 200）。
             var requestUri = request.RequestUri;
             if (requestUri is not null && requestUri.Host.Equals("static.hdslb.com", StringComparison.OrdinalIgnoreCase))
             {
                 var url = requestUri.AbsoluteUri;
                 var suffixIndex = url.IndexOf('@', StringComparison.Ordinal);
-                if (suffixIndex > 0)
+                var suffix = suffixIndex > 0 ? url[suffixIndex..] : string.Empty;
+
+                // 默认头像 noface.gif 还多一层问题：它是 GIF，而图片解码端只吃 JPEG。
+                // 换成 i0.hdslb.com 上等价的 noface.jpg（实测带尺寸后缀返回 200 image/jpeg）。
+                if (requestUri.AbsolutePath.Contains("noface.gif", StringComparison.OrdinalIgnoreCase))
+                {
+                    request.RequestUri = new Uri("https://i0.hdslb.com/bfs/face/member/noface.jpg" + suffix);
+                }
+                else if (suffixIndex > 0)
                 {
                     request.RequestUri = new Uri(url[..suffixIndex]);
                 }
