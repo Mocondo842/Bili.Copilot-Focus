@@ -65,6 +65,7 @@ Check 'SearchByKeyword(data.Name)' 1 'U15 点标签不再把字符串喂给强�
 Check 'internal static void Mark(string activity)' 1 'U16 卡顿面包屑入口'
 Check '卡顿前最近动作' 1 'U17 卡顿日志带最近动作'
 Check 'Interlocked.Exchange(ref _reported, 1) == 1' 1 'U18 看门狗去重标志改原子'
+Check 'static.hdslb.com' 1 'U19 static 域名去掉尺寸后缀'
 Check 'UI 线程恢复响应，本次卡顿累计约' 1 'U2b 恢复后补报总时长'
 Check 'UI 看门狗已启动' 1 'U2 看门狗启动有日志'
 Check 'UiStallWatchdog.Start();' 1 'U3 启动时拉起看门狗'
@@ -86,6 +87,9 @@ foreach ($item in @(
     @('src/Desktop/BiliCopilot.UI/BiliCopilot.UI.csproj', 'Serilog.Sinks.Async', 'U11 异步日志包已被引用'),
     @('src/Desktop/BiliCopilot.UI/App.xaml.cs', 'Log.CloseAndFlush();', 'U12 退出前刷日志队列'),
     @('src/Desktop/BiliCopilot.UI/Toolkits/UiStallWatchdog.cs', 'UI 看门狗', 'U13 看门狗文件就位'),
+    @('src/Desktop/BiliCopilot.UI/Controls/Components/AppSearchBox.xaml', 'TextMemberPath="SearchContent"', 'U21 联想选中后写回输入框'),
+    @('src/Desktop/BiliCopilot.UI/Controls/Components/AppSearchBox.xaml', 'UpdateTextOnSelect="True"', 'U22 联想可选中'),
+    @('src/Desktop/BiliCopilot.UI/Toolkits/UiStallWatchdog.cs', '其中 GC 暂停', 'U23 卡顿日志带 GC 暂停增量'),
     @('src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml', '<comment:CommentOverlayPanel', 'C17 搜索页评论浮层'))) {
     if (-not (Select-String -Path $item[0] -SimpleMatch -Pattern $item[1])) {
         Write-Host "MISSING ANCHOR: $($item[2])"

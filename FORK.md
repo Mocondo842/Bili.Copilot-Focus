@@ -66,6 +66,10 @@
 | U7 | 80 张图片加载失败（92 条报错里 76 条是 `http://` 地址，且每条白重试一次） | 图片 HttpClient 的 handler 里把 `http://` 请求统一升到 `https://`（实测同一地址 https 直接 200）；一处改动覆盖全部图片控件 |
 | U8 | 卡顿只能知道"什么时候"，不知道"在做什么" | 看门狗加面包屑：`UiStallWatchdog.Mark(...)` 记最近 8 条 UI 侧动作（导航、开播放器…），卡顿时连同最近动作一起写日志 |
 
+| U9 | 搜索联想能弹出但**选不中**：点了「翼王」仍按输入框里的 `yiwang` 搜 | `AutoSuggestBox` 上 `UpdateTextOnSelect="False"` 且没有 `TextMemberPath`：选中项既写不回输入框（看起来"没选中"），也没有可显示的字段。改成 `TextMemberPath="SearchContent"` + `UpdateTextOnSelect="True"`，选中即回填、搜索走选中项 |
+| U10 | 默认头像类图片 42 次 404（`static.hdslb.com/.../noface.gif@96w_96h_1c.jpg`） | `static.hdslb.com` 不提供图片尺寸变换，带 `@Ww_Hh_1c.jpg` 后缀必 404（实测去掉后缀 200）；图片请求里对 `static.hdslb.com` 去掉 `@` 之后的后缀 |
+| U11 | 卡顿只知道"卡多久"，不知道是 GC 还是业务代码 | 看门狗在卡顿前后各读一次 `GC.GetTotalPauseDuration()`，恢复行写「其中 GC 暂停 xxxms」——两者接近就是 GC，接近 0 就是 UI 线程上的业务代码 |
+
 > 阶段 B/C 未做（如 `Richasy.WinUIKernel.Share` preview4、FluentIcons 2.x、AgentKernel preview6、按实测卡顿点做的针对性优化）：理由与验收口径见设计文档 `.engine/cross-review-upgrade/draft.md`。
 
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |

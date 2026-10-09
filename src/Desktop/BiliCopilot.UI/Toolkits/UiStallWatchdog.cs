@@ -27,6 +27,7 @@ internal static class UiStallWatchdog
     private static ILogger? _logger;
     private static long _ackTicks;
     private static long _stallStartTicks;
+    private static double _gcPauseAtStallStart;
     private static int _reported;
     private static readonly Queue<string> Marks = new();
     private static readonly object MarkLock = new();
@@ -119,13 +120,15 @@ internal static class UiStallWatchdog
 
             // 卡顿起点取"最近一次 UI 回调的时刻"，而不是检出时刻，避免总时长被少算一个周期。
             Interlocked.Exchange(ref _stallStartTicks, ackTicks);
+            _gcPauseAtStallStart = GC.GetTotalPauseDuration().TotalMilliseconds;
             _logger?.LogWarning("UI 线程卡顿 {ElapsedMs}ms（阈值 {Threshold}ms）", elapsedMs, ThresholdMs);
             _logger?.LogWarning("卡顿前最近动作：{Marks}", DescribeMarks());
         }
         else if (Interlocked.Exchange(ref _reported, 0) == 1)
         {
             var totalMs = (long)((now - _stallStartTicks) * 1000.0 / Stopwatch.Frequency);
-            _logger?.LogWarning("UI 线程恢复响应，本次卡顿累计约 {TotalMs}ms", totalMs);
+            var gcPauseMs = GC.GetTotalPauseDuration().TotalMilliseconds - _gcPauseAtStallStart;
+            _logger?.LogWarning("UI 线程恢复响应，本次卡顿累计约 {TotalMs}ms（其中 GC 暂停 {GcPauseMs}ms）", totalMs, gcPauseMs);
         }
     }
 }

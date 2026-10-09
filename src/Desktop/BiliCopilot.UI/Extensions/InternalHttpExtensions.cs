@@ -61,6 +61,19 @@ internal static class InternalHttpExtensions
                 request.RequestUri = new UriBuilder(request.RequestUri) { Scheme = Uri.UriSchemeHttps, Port = -1 }.Uri;
             }
 
+            // static.hdslb.com 不提供图片尺寸变换：带上 @Ww_Hh_1c.jpg 后缀会 404（实测 noface.gif 去掉后缀即 200），
+            // 去掉后缀再请求。
+            var requestUri = request.RequestUri;
+            if (requestUri is not null && requestUri.Host.Equals("static.hdslb.com", StringComparison.OrdinalIgnoreCase))
+            {
+                var url = requestUri.AbsoluteUri;
+                var suffixIndex = url.IndexOf('@', StringComparison.Ordinal);
+                if (suffixIndex > 0)
+                {
+                    request.RequestUri = new Uri(url[..suffixIndex]);
+                }
+            }
+
             request.Version = HttpVersion.Version20;
             request.VersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
             return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
