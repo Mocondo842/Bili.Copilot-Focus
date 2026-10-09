@@ -56,6 +56,7 @@ public sealed partial class NavigationViewModel : ViewModelBase, INavServiceView
     /// <inheritdoc/>
     public void NavigateTo(Type pageType, object? parameter = null)
     {
+        BiliCopilot.UI.Toolkits.UiStallWatchdog.Mark($"导航 {pageType.Name}");
         if (_navFrame is null)
         {
             throw new InvalidOperationException("导航框架未初始化.");
@@ -105,6 +106,7 @@ public sealed partial class NavigationViewModel : ViewModelBase, INavServiceView
     /// <inheritdoc/>
     public void NavigateToOver(Type pageType, object? parameter = null)
     {
+        BiliCopilot.UI.Toolkits.UiStallWatchdog.Mark($"浮层 {pageType.Name}");
         if (_overFrame is null)
         {
             throw new InvalidOperationException("导航框架未初始化.");

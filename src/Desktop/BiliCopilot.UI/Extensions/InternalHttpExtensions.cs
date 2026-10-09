@@ -54,6 +54,13 @@ internal static class InternalHttpExtensions
     {
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            // 接口给的图片地址可能是 http://（实测同一地址 https 直接 200），统一升到 https 再发请求，
+            // 否则 WinUI 侧加载会失败、还会白重试一次。
+            if (request.RequestUri?.Scheme == Uri.UriSchemeHttp)
+            {
+                request.RequestUri = new UriBuilder(request.RequestUri) { Scheme = Uri.UriSchemeHttps, Port = -1 }.Uri;
+            }
+
             request.Version = HttpVersion.Version20;
             request.VersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
             return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);

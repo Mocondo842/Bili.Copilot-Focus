@@ -146,6 +146,20 @@ public sealed partial class SearchBoxViewModel : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// 用关键字搜索. 给"点标签"这类只有字符串的入口用，避免把 string 直接喂给强类型命令.
+    /// </summary>
+    /// <param name="keyword">搜索关键字.</param>
+    public void SearchByKeyword(string keyword)
+    {
+        if (string.IsNullOrEmpty(keyword))
+        {
+            return;
+        }
+
+        Search(new SearchSuggestItemViewModel(new Richasy.BiliKernel.Models.Search.SearchSuggestItem(keyword, keyword)));
+    }
+
     [RelayCommand]
     private void Search(SearchSuggestItemViewModel vm)
     {

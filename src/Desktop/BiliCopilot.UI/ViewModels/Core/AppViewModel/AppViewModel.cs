@@ -135,6 +135,7 @@ public sealed partial class AppViewModel : ViewModelBase
     [RelayCommand]
     private async Task OpenPlayerAsync(MediaSnapshot snapshot)
     {
+        BiliCopilot.UI.Toolkits.UiStallWatchdog.Mark("打开播放器");
         var playerVM = this.Get<PlayerViewModel>();
         this.Get<AppViewModel>().Players.Add(playerVM);
         await playerVM.InitializeAsync(snapshot);

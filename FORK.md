@@ -62,6 +62,10 @@
 | U4 | 每个列表条目都 new 一个区域性对象 / 每个文本都 new 一个正则 | `AppToolkit.GetCulture(language)` 用 `ConcurrentDictionary` 按语言缓存（视频、文章两条目路径改用它）；`EmoteTextBlock` 的表情正则提为 `static readonly`（保留捕获组语义，`Split` 行为不变） |
 | U5 | 长列表卡片动画无法关（逐卡注册合成动画） | 启动时按本地设置 `IsCardAnimationEnabled`（默认 true，行为与上游一致）写 `WinUIKernelShareExtensions.IsCardAnimationEnabled`；是否默认关留给拿到看门狗数据后再定 |
 
+| U6 | 点播放页的标签会抛未处理异常（日志实测 4 秒内 5 次 `System.ArgumentException: ... requires an argument of type SearchSuggestItemViewModel`） | `VideoDescriptorControl.OnTagButtonClick` 把标签名（`string`）直接喂给强类型命令；改为 `SearchBoxViewModel.SearchByKeyword(string)`（内部自建 VM 再走原路径） |
+| U7 | 80 张图片加载失败（92 条报错里 76 条是 `http://` 地址，且每条白重试一次） | 图片 HttpClient 的 handler 里把 `http://` 请求统一升到 `https://`（实测同一地址 https 直接 200）；一处改动覆盖全部图片控件 |
+| U8 | 卡顿只能知道"什么时候"，不知道"在做什么" | 看门狗加面包屑：`UiStallWatchdog.Mark(...)` 记最近 8 条 UI 侧动作（导航、开播放器…），卡顿时连同最近动作一起写日志 |
+
 > 阶段 B/C 未做（如 `Richasy.WinUIKernel.Share` preview4、FluentIcons 2.x、AgentKernel preview6、按实测卡顿点做的针对性优化）：理由与验收口径见设计文档 `.engine/cross-review-upgrade/draft.md`。
 
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |

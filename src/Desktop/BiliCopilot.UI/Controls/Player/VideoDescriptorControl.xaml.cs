@@ -18,6 +18,6 @@ public sealed partial class VideoDescriptorControl : VideoPlayerControlBase
     private void OnTagButtonClick(object sender, RoutedEventArgs e)
     {
         var data = (sender as FrameworkElement).DataContext as BiliTag;
-        this.Get<SearchBoxViewModel>().SearchCommand.Execute(data.Name);
+        this.Get<SearchBoxViewModel>().SearchByKeyword(data.Name);
     }
 }
