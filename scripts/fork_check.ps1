@@ -67,6 +67,7 @@ Check '卡顿前最近动作' 1 'U17 卡顿日志带最近动作'
 Check 'Interlocked.Exchange(ref _reported, 1) == 1' 1 'U18 看门狗去重标志改原子'
 Check 'static.hdslb.com' 1 'U19 static 域名去掉尺寸后缀'
 Check 'noface.gif' 1 'U19b 默认头像换成可解码的 JPEG'
+Check 'MinorThresholdMs = 300' 1 'U25 微卡顿分档（300ms 起，按分钟汇总）'
 Check 'UI 线程恢复响应，本次卡顿累计约' 1 'U2b 恢复后补报总时长'
 Check 'UI 看门狗已启动' 1 'U2 看门狗启动有日志'
 Check 'UiStallWatchdog.Start();' 1 'U3 启动时拉起看门狗'
@@ -88,6 +89,7 @@ foreach ($item in @(
     @('src/Desktop/BiliCopilot.UI/BiliCopilot.UI.csproj', 'Serilog.Sinks.Async', 'U11 异步日志包已被引用'),
     @('src/Desktop/BiliCopilot.UI/App.xaml.cs', 'Log.CloseAndFlush();', 'U12 退出前刷日志队列'),
     @('src/Desktop/BiliCopilot.UI/Toolkits/UiStallWatchdog.cs', 'UI 看门狗', 'U13 看门狗文件就位'),
+    @('src/Desktop/BiliCopilot.UI/Controls/Danmaku/VideoDanmakuPanel.xaml.cs', '弹幕：渲染器', 'U26 日志记录弹幕渲染器与开关状态'),
     @('src/Desktop/BiliCopilot.UI/ViewModels/Items/SearchSuggestItemViewModel.cs', '[GeneratedBindableCustomProperty]', 'U24 联想 VM 支持运行时绑定'),
     @('src/Desktop/BiliCopilot.UI/Controls/Components/AppSearchBox.xaml', 'TextMemberPath="SearchContent"', 'U21 联想选中后写回输入框'),
     @('src/Desktop/BiliCopilot.UI/Controls/Components/AppSearchBox.xaml', 'UpdateTextOnSelect="True"', 'U22 联想可选中'),

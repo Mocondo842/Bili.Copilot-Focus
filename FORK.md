@@ -74,6 +74,9 @@
 | U13 | 默认头像仍 42 次加载失败（`noface.gif` 改成去后缀后仍失败） | 去后缀只是让它 200：`noface.gif` 是 **GIF**，而图片解码端只吃 JPEG。改为把默认头像重写到 `i0.hdslb.com/bfs/face/member/noface.jpg`（支持尺寸后缀，实测 200 image/jpeg） |
 | U14 | 卡顿是 GC 还是业务代码（`其中 GC 暂停 0ms` × 5） | 已定论：**不是 GC**，全部为 UI 线程上的业务代码。下一轮用"关弹幕 A/B"区分弹幕渲染与列表渲染 |
 
+| U15 | 800ms 阈值抓不到"体感卡但没记录"的微卡顿 | 看门狗加第二档：300–800ms 记数并按分钟汇总成一条（`近 60 秒微卡顿 N 次，最长 Mms`，无微卡顿不输出），严重档保持逐条 |
+| U16 | 日志看不出当时弹幕是开是关，A/B 无法自证 | 弹幕面板初始化时写一条 `弹幕：渲染器 X，滚动/顶部/底部 开否`，日志自己说明测试条件 |
+
 > 阶段 B/C 未做（如 `Richasy.WinUIKernel.Share` preview4、FluentIcons 2.x、AgentKernel preview6、按实测卡顿点做的针对性优化）：理由与验收口径见设计文档 `.engine/cross-review-upgrade/draft.md`。
 
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |

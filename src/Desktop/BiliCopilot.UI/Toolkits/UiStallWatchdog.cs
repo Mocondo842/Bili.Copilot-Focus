@@ -18,6 +18,8 @@ internal static class UiStallWatchdog
     internal const string EnabledSettingName = "UiWatchdogEnabled";
 
     private const int ThresholdMs = 800;
+    private const int MinorThresholdMs = 300;
+    private const int MinorReportIntervalMs = 60000;
     private const int PeriodMs = 500;
 
     private static readonly object SyncRoot = new();
@@ -28,6 +30,10 @@ internal static class UiStallWatchdog
     private static long _ackTicks;
     private static long _stallStartTicks;
     private static double _gcPauseAtStallStart;
+    private static readonly object MinorLock = new();
+    private static int _minorCount;
+    private static int _minorMaxMs;
+    private static long _lastMinorReportMs;
     private static int _reported;
     private static readonly Queue<string> Marks = new();
     private static readonly object MarkLock = new();
@@ -69,6 +75,7 @@ internal static class UiStallWatchdog
             _queue = GlobalDependencies.Kernel.GetRequiredService<DispatcherQueue>();
             _logger = GlobalDependencies.Kernel.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(UiStallWatchdog));
             _ackTicks = Stopwatch.GetTimestamp();
+        _lastMinorReportMs = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
             _timer = new Timer(OnTick, null, PeriodMs, PeriodMs);
             _logger.LogInformation("UI 看门狗已启动（阈值 {Threshold}ms，周期 {Period}ms）", ThresholdMs, PeriodMs);
         }
@@ -84,6 +91,36 @@ internal static class UiStallWatchdog
             _timer?.Dispose();
             _timer = null;
             _queue = null;
+        }
+    }
+
+    private static void ReportMinorStalls(long now)
+    {
+        var nowMs = now * 1000 / Stopwatch.Frequency;
+        if (nowMs - Volatile.Read(ref _lastMinorReportMs) < MinorReportIntervalMs)
+        {
+            return;
+        }
+
+        Volatile.Write(ref _lastMinorReportMs, nowMs);
+        int count;
+        int maxMs;
+        lock (MinorLock)
+        {
+            count = _minorCount;
+            maxMs = _minorMaxMs;
+            _minorCount = 0;
+            _minorMaxMs = 0;
+        }
+
+        if (count > 0)
+        {
+            _logger?.LogWarning(
+                "近 {Seconds} 秒微卡顿 {Count} 次，最长 {MaxMs}ms（阈值 {Threshold}ms）",
+                MinorReportIntervalMs / 1000,
+                count,
+                maxMs,
+                MinorThresholdMs);
         }
     }
 
@@ -111,6 +148,19 @@ internal static class UiStallWatchdog
 
         var ackTicks = Volatile.Read(ref _ackTicks);
         var elapsedMs = (long)((now - ackTicks) * 1000.0 / Stopwatch.Frequency);
+        if (elapsedMs is >= MinorThresholdMs and < ThresholdMs)
+        {
+            lock (MinorLock)
+            {
+                _minorCount++;
+                if (elapsedMs > _minorMaxMs)
+                {
+                    _minorMaxMs = (int)elapsedMs;
+                }
+            }
+        }
+
+        ReportMinorStalls(now);
         if (elapsedMs >= ThresholdMs)
         {
             if (Interlocked.Exchange(ref _reported, 1) == 1)

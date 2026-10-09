@@ -40,6 +40,12 @@ public sealed partial class VideoDanmakuPanel : DanmakuControlBase
     private void ReloadRenderer()
     {
         var type = SettingsToolkit.ReadLocalSetting(Models.Constants.SettingNames.DanmakuRenderer, DanmakuRendererType.Win2D);
+        this.Get<ILogger<VideoDanmakuPanel>>().LogInformation(
+            "弹幕：渲染器 {Renderer}，滚动 {Rolling} / 顶部 {Top} / 底部 {Bottom}",
+            type,
+            ViewModel?.IsRollingEnabled,
+            ViewModel?.IsTopEnabled,
+            ViewModel?.IsBottomEnabled);
         if (type == DanmakuRendererType.DirectX && _danmakuRenderer == null)
         {
             _danmakuRenderer = new DanmakuRenderer(RootGrid, this.Get<ILogger<DanmakuRenderer>>());
