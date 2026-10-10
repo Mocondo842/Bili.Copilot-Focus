@@ -68,6 +68,7 @@ check "noface.gif"                                                    1 "U19b �
 check "MinorThresholdMs = 300"                                        1 "U25 微卡顿分档（300ms 起，按分钟汇总）"
 check "SettingNames.PlayerVolume, -1d"                                1 "U27 初始化时显式恢复上次音量"
 check "Stopwatch.GetTimestamp() - postedTicks"                        1 "U29 卡顿口径=UI 回调延迟，不含 tick 周期"
+check "ImageFailed += OnImageFailed"                                     1 "U30 图片失败有预算重试（回收取消不再留空白）"
 check "UI 线程恢复响应，本次卡顿累计约"                                  1 "U2b 恢复后补报总时长"
 check "UI 看门狗已启动"                                                  1 "U2 看门狗启动有日志（没有卡顿行也可解释）"
 check "UiStallWatchdog.Start();"                                      1 "U3 启动时拉起看门狗"

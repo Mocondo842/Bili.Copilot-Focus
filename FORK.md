@@ -80,6 +80,9 @@
 | U17 | 每次视频重新加载，音量都被还原（回到系统/mpv 默认） | 音量只在 `MpvPlayOptions.InitialVolume` 里恢复，而那是"新建播放源"才走的路（且只有视频/番剧两个 resolver 传了它）。现在播放器初始化时读 `SettingNames.PlayerVolume` 显式 `SetVolumeAsync` 复位，并在 `CurrentVolume` 变化时立即持久化（不再依赖 `Player.Volume` 事件是否触发） |
 | U18 | 看门狗把 tick 周期算进了卡顿：微卡顿每分钟 120 次、最长 512ms 全是假象 | ack 回调改记"自身延迟"（投递→执行时刻之差），不再记执行时刻——否则 `now - ackTicks` 里必然含一个 500ms 周期，等于把 500ms 当基线。卡顿起点同步改成 `now - latencyTicks` |
 
+| U19 | 评论区用户上传的图片会随机不显示，进出页面有时又好了 | 图片控件（`BasicCoverImage`）在列表回收/离开视野时会被基类取消在途下载，此后没有新的 Source 变更就再也不加载。在子类里挂 `ImageFailed`，对失败做**有预算的重试**（每次入树重置，最多 2 次；先置空再赋回同一 Uri 以触发重新加载）——覆盖评论图、封面、头像等所有用该控件的图片 |
+| U20 | 用户上传的评论图与表情图一个是 `BitmapImage` 直连、一个走 `ImageExBase`，失败一个静默一个可查 | 评论图用的是 `BasicCoverImage`（同一条可查路径），表情图是 `BitmapImage` 直连——后者失败不写日志，需要时再单独加观测 |
+
 > 阶段 B/C 未做（如 `Richasy.WinUIKernel.Share` preview4、FluentIcons 2.x、AgentKernel preview6、按实测卡顿点做的针对性优化）：理由与验收口径见设计文档 `.engine/cross-review-upgrade/draft.md`。
 
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |
