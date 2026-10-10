@@ -210,6 +210,16 @@ public sealed partial class PlayerViewModel
                 MaxVolume = SettingsToolkit.ReadLocalSetting(SettingNames.MaxVolume, 100d);
                 await Client.SetMaxVolumeAsync(Convert.ToInt32(MaxVolume));
 
+                // 显式恢复上次在播放器里调过的音量。以前只有 MpvPlayOptions.InitialVolume 这一条路
+                // （且只有视频/番剧两个 resolver 传了它），重新加载后 mpv 回到默认音量，
+                // 表现就是"每次都还原成系统音量"。
+                var lastVolume = SettingsToolkit.ReadLocalSetting(SettingNames.PlayerVolume, -1d);
+                if (lastVolume >= 0)
+                {
+                    CurrentVolume = Math.Clamp(lastVolume, 0, MaxVolume);
+                    await Client.SetVolumeAsync(CurrentVolume);
+                }
+
                 var audioExclusive = SettingsToolkit.ReadLocalSetting(SettingNames.AudioExclusiveEnabled, false);
                 await Client.SetAudioExclusiveAsync(audioExclusive);
             }

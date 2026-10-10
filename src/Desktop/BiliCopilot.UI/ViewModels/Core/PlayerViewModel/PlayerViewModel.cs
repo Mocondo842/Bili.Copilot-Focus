@@ -81,6 +81,9 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
     }
 
     [RelayCommand]
+    partial void OnCurrentVolumeChanged(double value)
+        => SettingsToolkit.WriteLocalSetting(SettingNames.PlayerVolume, value);
+
     internal async Task InitializeAsync(MediaSnapshot snapshot)
     {
         _snapshot = snapshot;

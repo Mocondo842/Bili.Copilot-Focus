@@ -77,6 +77,9 @@
 | U15 | 800ms 阈值抓不到"体感卡但没记录"的微卡顿 | 看门狗加第二档：300–800ms 记数并按分钟汇总成一条（`近 60 秒微卡顿 N 次，最长 Mms`，无微卡顿不输出），严重档保持逐条 |
 | U16 | 日志看不出当时弹幕是开是关，A/B 无法自证 | 弹幕面板初始化时写一条 `弹幕：渲染器 X，滚动/顶部/底部 开否`，日志自己说明测试条件 |
 
+| U17 | 每次视频重新加载，音量都被还原（回到系统/mpv 默认） | 音量只在 `MpvPlayOptions.InitialVolume` 里恢复，而那是"新建播放源"才走的路（且只有视频/番剧两个 resolver 传了它）。现在播放器初始化时读 `SettingNames.PlayerVolume` 显式 `SetVolumeAsync` 复位，并在 `CurrentVolume` 变化时立即持久化（不再依赖 `Player.Volume` 事件是否触发） |
+| U18 | 看门狗把 tick 周期算进了卡顿：微卡顿每分钟 120 次、最长 512ms 全是假象 | ack 回调改记"自身延迟"（投递→执行时刻之差），不再记执行时刻——否则 `now - ackTicks` 里必然含一个 500ms 周期，等于把 500ms 当基线。卡顿起点同步改成 `now - latencyTicks` |
+
 > 阶段 B/C 未做（如 `Richasy.WinUIKernel.Share` preview4、FluentIcons 2.x、AgentKernel preview6、按实测卡顿点做的针对性优化）：理由与验收口径见设计文档 `.engine/cross-review-upgrade/draft.md`。
 
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |

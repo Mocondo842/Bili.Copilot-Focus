@@ -33,7 +33,7 @@ concurrency:
 
 # run 重跑说明：run #27 在 setup-env（外部依赖下载）步骤失败、未进入编译；本次重跑用于区分「外部下载抖动」与「依赖升级导致的还原失败」。
 env:
-  DEFAULT_VERSION: '2.2511.2.914'
+  DEFAULT_VERSION: '2.2511.2.915'
   REPORT_BRANCH: 'ci/logs'
   CERT_FILE: 'focus-sideload.pfx'
   CERT_CER: 'focus-sideload.cer'

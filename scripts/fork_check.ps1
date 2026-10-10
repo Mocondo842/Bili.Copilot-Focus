@@ -59,7 +59,7 @@ Check '_likeButton.Command = ViewModel?.ToggleLikeCommand;' 1 'C8 点赞命令�
 Check '_commentButton.Command = ViewModel?.ShowCommentCommand;' 1 'C9 评论命令在 code-behind 赋值'
 Check 'ReferenceEquals(video, ViewModel)' 1 'C10 取回后校验按钮是否已被列表回收'
 Check 'public VideoItemViewModel? InnerVideo' 1 'C11 用户空间视频卡片复用内层视频取简介'
-Check 'Interlocked.Exchange(ref _stallStartTicks, ackTicks);' 1 'U1 卡顿起点取最近一次 UI 回调时刻'
+Check 'Interlocked.Exchange(ref _stallStartTicks, now - latencyTicks);' 1 'U1 卡顿起点=被延迟的那次回调的投递时刻'
 Check 'request.RequestUri?.Scheme == Uri.UriSchemeHttp' 1 'U14 图片地址统一升级到 https'
 Check 'SearchByKeyword(data.Name)' 1 'U15 点标签不再把字符串喂给强类型命令'
 Check 'internal static void Mark(string activity)' 1 'U16 卡顿面包屑入口'
@@ -68,6 +68,8 @@ Check 'Interlocked.Exchange(ref _reported, 1) == 1' 1 'U18 看门狗去重标志
 Check 'static.hdslb.com' 1 'U19 static 域名去掉尺寸后缀'
 Check 'noface.gif' 1 'U19b 默认头像换成可解码的 JPEG'
 Check 'MinorThresholdMs = 300' 1 'U25 微卡顿分档（300ms 起，按分钟汇总）'
+Check 'SettingNames.PlayerVolume, -1d' 1 'U27 初始化时显式恢复上次音量'
+Check 'Stopwatch.GetTimestamp() - postedTicks' 1 'U29 卡顿口径=UI 回调延迟，不含 tick 周期'
 Check 'UI 线程恢复响应，本次卡顿累计约' 1 'U2b 恢复后补报总时长'
 Check 'UI 看门狗已启动' 1 'U2 看门狗启动有日志'
 Check 'UiStallWatchdog.Start();' 1 'U3 启动时拉起看门狗'
@@ -90,6 +92,7 @@ foreach ($item in @(
     @('src/Desktop/BiliCopilot.UI/App.xaml.cs', 'Log.CloseAndFlush();', 'U12 退出前刷日志队列'),
     @('src/Desktop/BiliCopilot.UI/Toolkits/UiStallWatchdog.cs', 'UI 看门狗', 'U13 看门狗文件就位'),
     @('src/Desktop/BiliCopilot.UI/Controls/Danmaku/VideoDanmakuPanel.xaml.cs', '弹幕：渲染器', 'U26 日志记录弹幕渲染器与开关状态'),
+    @('src/Desktop/BiliCopilot.UI/ViewModels/Core/PlayerViewModel/PlayerViewModel.cs', 'OnCurrentVolumeChanged', 'U28 音量变化即持久化'),
     @('src/Desktop/BiliCopilot.UI/ViewModels/Items/SearchSuggestItemViewModel.cs', '[GeneratedBindableCustomProperty]', 'U24 联想 VM 支持运行时绑定'),
     @('src/Desktop/BiliCopilot.UI/Controls/Components/AppSearchBox.xaml', 'TextMemberPath="SearchContent"', 'U21 联想选中后写回输入框'),
     @('src/Desktop/BiliCopilot.UI/Controls/Components/AppSearchBox.xaml', 'UpdateTextOnSelect="True"', 'U22 联想可选中'),

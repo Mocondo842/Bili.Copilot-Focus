@@ -27,7 +27,7 @@ internal static class UiStallWatchdog
     private static Timer? _timer;
     private static DispatcherQueue? _queue;
     private static ILogger? _logger;
-    private static long _ackTicks;
+    private static long _ackLatencyTicks;
     private static long _stallStartTicks;
     private static double _gcPauseAtStallStart;
     private static readonly object MinorLock = new();
@@ -74,7 +74,7 @@ internal static class UiStallWatchdog
 
             _queue = GlobalDependencies.Kernel.GetRequiredService<DispatcherQueue>();
             _logger = GlobalDependencies.Kernel.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(UiStallWatchdog));
-            _ackTicks = Stopwatch.GetTimestamp();
+            _ackLatencyTicks = Stopwatch.GetTimestamp();
         _lastMinorReportMs = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
             _timer = new Timer(OnTick, null, PeriodMs, PeriodMs);
             _logger.LogInformation("UI 看门狗已启动（阈值 {Threshold}ms，周期 {Period}ms）", ThresholdMs, PeriodMs);
@@ -141,13 +141,16 @@ internal static class UiStallWatchdog
         }
 
         var now = Stopwatch.GetTimestamp();
+        var postedTicks = now;
         _ = queue.TryEnqueue(() =>
         {
-            Interlocked.Exchange(ref _ackTicks, Stopwatch.GetTimestamp());
+            // 记录这次回调"从投递到执行"的延迟。以前记的是执行时刻，读出来的差值里
+            // 必然含一个 tick 周期（500ms），把 500ms 当成了基线——所以微卡顿会一直误报。
+            Interlocked.Exchange(ref _ackLatencyTicks, Stopwatch.GetTimestamp() - postedTicks);
         });
 
-        var ackTicks = Volatile.Read(ref _ackTicks);
-        var elapsedMs = (long)((now - ackTicks) * 1000.0 / Stopwatch.Frequency);
+        var latencyTicks = Volatile.Read(ref _ackLatencyTicks);
+        var elapsedMs = (long)(latencyTicks * 1000.0 / Stopwatch.Frequency);
         if (elapsedMs is >= MinorThresholdMs and < ThresholdMs)
         {
             lock (MinorLock)
@@ -169,7 +172,7 @@ internal static class UiStallWatchdog
             }
 
             // 卡顿起点取"最近一次 UI 回调的时刻"，而不是检出时刻，避免总时长被少算一个周期。
-            Interlocked.Exchange(ref _stallStartTicks, ackTicks);
+            Interlocked.Exchange(ref _stallStartTicks, now - latencyTicks);
             _gcPauseAtStallStart = GC.GetTotalPauseDuration().TotalMilliseconds;
             _logger?.LogWarning("UI 线程卡顿 {ElapsedMs}ms（阈值 {Threshold}ms）", elapsedMs, ThresholdMs);
             _logger?.LogWarning("卡顿前最近动作：{Marks}", DescribeMarks());
