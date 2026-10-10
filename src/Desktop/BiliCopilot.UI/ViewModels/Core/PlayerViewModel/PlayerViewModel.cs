@@ -80,10 +80,10 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
         this.Get<AppViewModel>().Players.Remove(this);
     }
 
-    [RelayCommand]
     partial void OnCurrentVolumeChanged(double value)
         => SettingsToolkit.WriteLocalSetting(SettingNames.PlayerVolume, value);
 
+    [RelayCommand]
     internal async Task InitializeAsync(MediaSnapshot snapshot)
     {
         _snapshot = snapshot;
