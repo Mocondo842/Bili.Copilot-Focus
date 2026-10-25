@@ -1,0 +1,652 @@
+2026-10-13 20:19:10.297 +08:00 [INF] UI 看门狗已启动（阈值 800ms，周期 500ms）
+2026-10-13 20:19:10.835 +08:00 [INF] BiliCopilot.Visor started successfully.
+2026-10-13 20:19:11.014 +08:00 [INF] App version: 2.2511.2.913
+2026-10-13 20:19:11.350 +08:00 [INF] Visor initialized successfully.
+2026-10-13 20:21:31.866 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 20:21:32.504 +08:00 [INF] 选流：清晰度 120，偏好编码 hev，可选编码 avc1.640033/hvc1.1.6.L153.90/av01.0.12M.08.0.110.01.01.01.0，选中 hvc1.1.6.L153.90
+2026-10-13 20:21:34.188 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 20:21:34.189 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 20:21:34.650 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 20:21:37.678 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 20:21:37.744 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 20:21:50.086 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 20:21:50.086 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 20:21:50.126 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 20:26:12.515 +08:00 [INF] [MPV] Log message: warn - Failure when receiving data from the peer, retrying (#1) from 536788992
+
+2026-10-13 20:26:27.776 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:34:40.285 +08:00 [INF] UI 看门狗已启动（阈值 800ms，周期 500ms）
+2026-10-13 21:34:40.832 +08:00 [INF] BiliCopilot.Visor started successfully.
+2026-10-13 21:34:41.026 +08:00 [INF] App version: 2.2511.2.913
+2026-10-13 21:34:41.341 +08:00 [INF] Visor initialized successfully.
+2026-10-13 21:35:49.927 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/face/member/noface.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:36:48.682 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/face/2d2148dbb77ffff10df7c38c566b65f42ae0e516.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:25.818 +08:00 [ERR] 尝试加载搜索建议时出错.
+RichasyKernel.KernelException: 未知错误：The operation was canceled.
+ ---> System.Threading.Tasks.TaskCanceledException: The operation was canceled.
+ ---> System.Threading.Tasks.TaskCanceledException: The operation was canceled.
+ ---> System.IO.IOException: Unable to read data from the transport connection: 由于线程退出或应用程序请求，已中止 I/O 操作。.
+ ---> System.Net.Sockets.SocketException (995): 由于线程退出或应用程序请求，已中止 I/O 操作。
+   --- End of inner exception stack trace ---
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError, CancellationToken) + 0x3d
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource<System.Int32>.GetResult(Int16) + 0x52
+   at System.Net.Http.HttpConnection.RawConnectionStream.<ReadAsync>d__6.MoveNext() + 0x22a
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Security.SslStream.<EnsureFullTlsFrameAsync>d__168`1.MoveNext() + 0x1ab
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Security.SslStream.<ReadAsyncInternal>d__170`1.MoveNext() + 0x747
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Http.HttpConnection.<SendAsync>d__56.MoveNext() + 0xa5d
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnection.<SendAsync>d__56.MoveNext() + 0x1760
+--- End of stack trace from previous location ---
+   at System.Net.Http.HttpConnectionPool.<SendWithVersionDetectionAndRetryAsync>d__50.MoveNext() + 0xa39
+--- End of stack trace from previous location ---
+   at System.Net.Http.RedirectHandler.<SendAsync>d__4.MoveNext() + 0x1c0
+--- End of stack trace from previous location ---
+   at System.Net.Http.HttpClient.<<SendAsync>g__Core|83_0>d.MoveNext() + 0x9e
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpClient.HandleFailure(Exception, Boolean, HttpResponseMessage, CancellationTokenSource, CancellationToken, CancellationTokenSource) + 0x317
+   at System.Net.Http.HttpClient.<<SendAsync>g__Core|83_0>d.MoveNext() + 0x373
+--- End of stack trace from previous location ---
+   at Richasy.BiliKernel.Http.BiliHttpClient.<SendAsync>d__3.MoveNext() + 0x81
+   --- End of inner exception stack trace ---
+   at Richasy.BiliKernel.Http.BiliHttpClient.<SendAsync>d__3.MoveNext() + 0x2f0
+--- End of stack trace from previous location ---
+   at Richasy.BiliKernel.Services.Search.Core.SearchClient.<GetSearchSuggestsAsync>d__7.MoveNext() + 0x69
+--- End of stack trace from previous location ---
+   at BiliCopilot.UI.ViewModels.Components.SearchBoxViewModel.<ReloadSuggestionsAsync>d__2.MoveNext() + 0x317
+2026-10-13 21:37:26.778 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/21667e30c48c148c027028cec9a5b43ebd41a84d.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.778 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/5ed559f3e5ab8beba4d4c455fbe4ba0fed9a4b57.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.778 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/f401480419597b37deff6fff3ddb22e2b455753e.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.779 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/e80eaaa46f36ae1f7a962cb15669abf0c85b64e2.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.796 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/07f99ab3420fa8501c2e973ab02437243bd7d600.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.796 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/28cb01808c3664af5cba3ad0d04419787faa1abe.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.796 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/bab4d05f63fcb5e8435009eba6e5f6726721d784.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.797 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/0d481f733e6d99926fb2cac4ada6c343a097ceeb.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.797 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/313a93203ca905b181dfa1d8a485fdd83c41287f.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.797 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/2249e1f60b9a8fd135d4f55d56b2d3ed24962c99.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.797 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/eba853c0afbf253a1b8ccc24eed3e5923628acc3.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.800 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/281a4a4d7689b90b18bd9c7c9edb4dc6756b27ba.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.815 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/0a0b1c02167d111461f7d3d4119fbc7829908f28.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.815 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/87320bf044ae5544b3502c47bda9bfb5ec99bc93.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.816 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/ec5a78cc14b70ab7472e6d7e6366cc296e39882a.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.816 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/5c8dcc1750ea1486dea240953f23bbf06add3d02.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.816 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/95b469aa622f472a0c822ff7a351152f07cacbb2.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.816 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/78b49f776479b303f984c04fa10494d6f3468508.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:37:26.906 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/29d0be05025836a1e36d6b8bea049afb5f97e84c.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:46:38.984 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/face/ff44e5c13dc18df1ae338b9c0f1b83dbf1b35d5a.webp@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:46:43.224 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/face/08c23568e4ee8b39ff6c986445b05a7acb20e62f.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 21:47:55.128 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 21:47:55.739 +08:00 [INF] 选流：清晰度 116，偏好编码 hev，可选编码 avc1.640032/hvc1.1.6.L150.90，选中 hvc1.1.6.L150.90
+2026-10-13 21:47:56.362 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:47:56.362 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:47:56.464 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:47:56.464 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 21:47:56.466 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 21:54:39.678 +08:00 [WRN] UI 线程卡顿 881ms（阈值 800ms）
+2026-10-13 21:54:39.678 +08:00 [WRN] 卡顿前最近动作：21:47:54.826 打开播放器 ← 21:37:25.763 浮层 SearchPage ← 21:34:41.232 导航 MomentPage
+2026-10-13 21:54:39.798 +08:00 [WRN] UI 线程恢复响应，本次卡顿累计约 1000ms（其中 GC 暂停 0ms）
+2026-10-13 21:57:08.496 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 21:57:09.068 +08:00 [INF] 选流：清晰度 120，偏好编码 hev，可选编码 avc1.640034/hvc1.1.6.L153.90/av01.0.13M.08.0.110.01.01.01.0，选中 hvc1.1.6.L153.90
+2026-10-13 21:57:09.478 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:57:09.479 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:57:09.581 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:57:09.581 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 21:57:09.583 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 21:57:41.909 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:58:17.088 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 21:58:18.025 +08:00 [INF] 选流：清晰度 112，偏好编码 hev，可选编码 avc1.640033/hev1.1.6.L150.90/av01.0.08M.08.0.110.01.01.01.0，选中 hev1.1.6.L150.90
+2026-10-13 21:58:18.270 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:58:18.271 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:58:18.361 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 21:58:18.361 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 21:58:18.363 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 22:01:28.013 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:02:08.835 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 22:02:09.996 +08:00 [INF] 选流：清晰度 112，偏好编码 hev，可选编码 avc1.640033/hvc1.1.6.L150.90/av01.0.08M.08.0.110.01.01.01.0，选中 hvc1.1.6.L150.90
+2026-10-13 22:02:10.427 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:02:10.427 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:02:10.524 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:02:10.524 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 22:02:10.525 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 22:03:46.933 +08:00 [ERR] 尝试加载搜索建议时出错.
+RichasyKernel.KernelException: 未知错误：The operation was canceled.
+ ---> System.Threading.Tasks.TaskCanceledException: The operation was canceled.
+ ---> System.Threading.Tasks.TaskCanceledException: The operation was canceled.
+ ---> System.IO.IOException: Unable to read data from the transport connection: 由于线程退出或应用程序请求，已中止 I/O 操作。.
+ ---> System.Net.Sockets.SocketException (995): 由于线程退出或应用程序请求，已中止 I/O 操作。
+   --- End of inner exception stack trace ---
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError, CancellationToken) + 0x3d
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource<System.Int32>.GetResult(Int16) + 0x52
+   at System.Net.Http.HttpConnection.RawConnectionStream.<ReadAsync>d__6.MoveNext() + 0x22a
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Security.SslStream.<EnsureFullTlsFrameAsync>d__168`1.MoveNext() + 0x1ab
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Security.SslStream.<ReadAsyncInternal>d__170`1.MoveNext() + 0x747
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Http.HttpConnection.<SendAsync>d__56.MoveNext() + 0xa5d
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnection.<SendAsync>d__56.MoveNext() + 0x1760
+--- End of stack trace from previous location ---
+   at System.Net.Http.HttpConnectionPool.<SendWithVersionDetectionAndRetryAsync>d__50.MoveNext() + 0xa39
+--- End of stack trace from previous location ---
+   at System.Net.Http.RedirectHandler.<SendAsync>d__4.MoveNext() + 0x1c0
+--- End of stack trace from previous location ---
+   at System.Net.Http.HttpClient.<<SendAsync>g__Core|83_0>d.MoveNext() + 0x9e
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpClient.HandleFailure(Exception, Boolean, HttpResponseMessage, CancellationTokenSource, CancellationToken, CancellationTokenSource) + 0x317
+   at System.Net.Http.HttpClient.<<SendAsync>g__Core|83_0>d.MoveNext() + 0x373
+--- End of stack trace from previous location ---
+   at Richasy.BiliKernel.Http.BiliHttpClient.<SendAsync>d__3.MoveNext() + 0x81
+   --- End of inner exception stack trace ---
+   at Richasy.BiliKernel.Http.BiliHttpClient.<SendAsync>d__3.MoveNext() + 0x2f0
+--- End of stack trace from previous location ---
+   at Richasy.BiliKernel.Services.Search.Core.SearchClient.<GetSearchSuggestsAsync>d__7.MoveNext() + 0x69
+--- End of stack trace from previous location ---
+   at BiliCopilot.UI.ViewModels.Components.SearchBoxViewModel.<ReloadSuggestionsAsync>d__2.MoveNext() + 0x317
+2026-10-13 22:04:04.402 +08:00 [ERR] 尝试加载搜索建议时出错.
+RichasyKernel.KernelException: 未知错误：The operation was canceled.
+ ---> System.Threading.Tasks.TaskCanceledException: The operation was canceled.
+ ---> System.Threading.Tasks.TaskCanceledException: The operation was canceled.
+ ---> System.IO.IOException: Unable to read data from the transport connection: 由于线程退出或应用程序请求，已中止 I/O 操作。.
+ ---> System.Net.Sockets.SocketException (995): 由于线程退出或应用程序请求，已中止 I/O 操作。
+   --- End of inner exception stack trace ---
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError, CancellationToken) + 0x3d
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource<System.Int32>.GetResult(Int16) + 0x52
+   at System.Net.Http.HttpConnection.RawConnectionStream.<ReadAsync>d__6.MoveNext() + 0x22a
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Security.SslStream.<EnsureFullTlsFrameAsync>d__168`1.MoveNext() + 0x1ab
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Security.SslStream.<ReadAsyncInternal>d__170`1.MoveNext() + 0x747
+--- End of stack trace from previous location ---
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16) + 0x29
+   at System.Net.Http.HttpConnection.<FillAsync>d__82.MoveNext() + 0x202
+--- End of stack trace from previous location ---
+   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.<CopyToAsyncCore>d__8.MoveNext() + 0x363
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpConnection.ChunkedEncodingReadStream.<CopyToAsyncCore>d__8.MoveNext() + 0x46e
+--- End of stack trace from previous location ---
+   at System.Net.Http.HttpConnectionResponseContent.<<SerializeToStreamAsync>g__Impl|6_0>d.MoveNext() + 0x92
+--- End of stack trace from previous location ---
+   at System.Net.Http.HttpContent.<LoadIntoBufferAsyncCore>d__63.MoveNext() + 0x169
+--- End of stack trace from previous location ---
+   at System.Net.Http.HttpClient.<<SendAsync>g__Core|83_0>d.MoveNext() + 0x142
+   --- End of inner exception stack trace ---
+   at System.Net.Http.HttpClient.HandleFailure(Exception, Boolean, HttpResponseMessage, CancellationTokenSource, CancellationToken, CancellationTokenSource) + 0x317
+   at System.Net.Http.HttpClient.<<SendAsync>g__Core|83_0>d.MoveNext() + 0x373
+--- End of stack trace from previous location ---
+   at Richasy.BiliKernel.Http.BiliHttpClient.<SendAsync>d__3.MoveNext() + 0x81
+   --- End of inner exception stack trace ---
+   at Richasy.BiliKernel.Http.BiliHttpClient.<SendAsync>d__3.MoveNext() + 0x2f0
+--- End of stack trace from previous location ---
+   at Richasy.BiliKernel.Services.Search.Core.SearchClient.<GetSearchSuggestsAsync>d__7.MoveNext() + 0x69
+--- End of stack trace from previous location ---
+   at BiliCopilot.UI.ViewModels.Components.SearchBoxViewModel.<ReloadSuggestionsAsync>d__2.MoveNext() + 0x317
+2026-10-13 22:04:11.314 +08:00 [WRN] UI 线程卡顿 1012ms（阈值 800ms）
+2026-10-13 22:04:11.314 +08:00 [WRN] 卡顿前最近动作：22:02:08.595 打开播放器 ← 21:58:16.863 打开播放器 ← 21:57:08.285 打开播放器 ← 21:47:54.826 打开播放器 ← 21:37:25.763 浮层 SearchPage ← 21:34:41.232 导航 MomentPage
+2026-10-13 22:04:11.796 +08:00 [WRN] UI 线程恢复响应，本次卡顿累计约 1494ms（其中 GC 暂停 60.1880000000001ms）
+2026-10-13 22:06:11.941 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/face/6dc2cc55ca5f92799542fafd3951e478920832c9.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 22:06:38.487 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 22:06:39.314 +08:00 [INF] 选流：清晰度 80，偏好编码 hev，可选编码 avc1.640032/hvc1.1.6.L150.90/av01.0.08M.08.0.110.01.01.01.0，选中 hvc1.1.6.L150.90
+2026-10-13 22:06:39.607 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:06:39.607 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:06:39.704 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:06:39.704 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 22:06:39.706 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 22:07:09.926 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:07:44.669 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/face/member/noface.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 22:08:36.092 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 22:08:37.216 +08:00 [INF] 选流：清晰度 112，偏好编码 hev，可选编码 avc1.640033/hev1.1.6.L150.90/av01.0.00M.10.0.110.01.01.01.0，选中 hev1.1.6.L150.90
+2026-10-13 22:08:38.240 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:08:38.241 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:08:38.307 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 22:08:45.589 +08:00 [WRN] UI 线程卡顿 6129ms（阈值 800ms）
+2026-10-13 22:08:45.589 +08:00 [WRN] 卡顿前最近动作：22:08:35.843 打开播放器 ← 22:06:38.266 打开播放器 ← 22:04:43.198 浮层 SearchPage ← 22:02:08.595 打开播放器 ← 21:58:16.863 打开播放器 ← 21:57:08.285 打开播放器 ← 21:47:54.826 打开播放器 ← 21:37:25.763 浮层 SearchPage
+2026-10-13 22:08:57.666 +08:00 [INF] UI 看门狗已启动（阈值 800ms，周期 500ms）
+2026-10-13 22:08:57.671 +08:00 [INF] BiliCopilot.Visor is already running.
+2026-10-13 22:08:57.958 +08:00 [INF] App version: 2.2511.2.913
+2026-10-13 22:08:57.975 +08:00 [INF] Visor initialized successfully.
+2026-10-13 22:09:00.049 +08:00 [INF] Visor scroll accelerate enabled.
+2026-10-13 22:09:00.668 +08:00 [WRN] UI 线程卡顿 944ms（阈值 800ms）
+2026-10-13 22:09:00.668 +08:00 [WRN] 卡顿前最近动作：22:08:59.769 导航 SettingsPage ← 22:08:58.120 导航 MomentPage
+2026-10-13 22:09:01.178 +08:00 [WRN] UI 线程恢复响应，本次卡顿累计约 1454ms（其中 GC 暂停 0ms）
+2026-10-13 23:12:25.755 +08:00 [INF] UI 看门狗已启动（阈值 800ms，周期 500ms）
+2026-10-13 23:12:25.786 +08:00 [INF] BiliCopilot.Visor started successfully.
+2026-10-13 23:12:26.034 +08:00 [INF] App version: 2.2511.2.913
+2026-10-13 23:12:26.296 +08:00 [INF] Visor initialized successfully.
+2026-10-13 23:12:42.865 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/8ac6e2362b745d761c6cf0f1fef87a6619ec30ea.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.905 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/cb2d7bd1fe2e9b5501988a6070c185bea681737a.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.905 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/3425566f61b0427dd8fb2b2470fbb4dd5c7ce06f.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.925 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/3259890d527236e3fe5bd68fb6e244c1b4344981.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.925 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/330c9077020cc9bdab6fae1e2a3b35b569722258.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.925 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/b2e934c3c6228b44c10609a42321f123c6a49e2a.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.925 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/888367d36ad4e11322e23e7302ad75a96728b6f5.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.925 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/ee4c2a5784b785b8f3952cb84a87fcfe765305bc.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.925 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/19537f9a7a23ac14e9cd63732030da3470025e39.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.925 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/dcba1e8d7fe21873a4e8305c22d11df94f746a79.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.943 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/91f5bc6d3e2d13aa71d42eae08d479e80db63330.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.944 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/archive/f4e20848ad0bb6f7ff09196aec56bc126f2e54f5.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.944 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/archive/09336cdad332058cc0641e3c288f8f93ab5ddcb6.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.944 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/8ebd7f99cc88af314f2bacd595bb8158a8459cdb.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.944 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/38e969c8dea15b56f856986edaac6c9f2e2460e3.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:12:42.962 +08:00 [ERR] Failed to load image from https://i2.hdslb.com/bfs/archive/71ce5a161c6f765486aee8299918e028d0c6a786.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:14:56.736 +08:00 [ERR] Failed to load image from https://i0.hdslb.com/bfs/face/139527e88d863d464d6905f280bfaf8c552a9cbb.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:15:33.904 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 23:15:34.478 +08:00 [INF] 选流：清晰度 120，偏好编码 hev，可选编码 avc1.640034/hev1.1.6.L153.90/av01.0.00M.10.0.110.01.01.01.0，选中 hev1.1.6.L153.90
+2026-10-13 23:15:34.695 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:15:34.696 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:15:34.784 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:15:34.822 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 23:15:35.013 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 23:20:06.862 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:20:29.251 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 23:20:30.183 +08:00 [INF] 选流：清晰度 120，偏好编码 hev，可选编码 avc1.640033/hvc1.1.6.L153.90/av01.0.12M.08.0.110.01.01.01.0，选中 hvc1.1.6.L153.90
+2026-10-13 23:20:30.930 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:20:30.930 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:20:31.134 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:20:31.221 +08:00 [ERR] Failed to load image from http://i1.hdslb.com/bfs/archive/8dbb305dd8da3f0fd5c69122a8084a370e155ec0.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.221 +08:00 [ERR] Failed to load image from http://i1.hdslb.com/bfs/archive/78fdf5813f659584b4302a906bfe45c9b9da26f5.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.235 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/5bb177441806b5559a37cf78861402df3b72bca2.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.235 +08:00 [ERR] Failed to load image from http://i2.hdslb.com/bfs/archive/0feba357da375c6329d5b813515103fae23fb08c.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.236 +08:00 [ERR] Failed to load image from http://i1.hdslb.com/bfs/archive/e0ed1e110fd0f45559400ed5b1870af925984069.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.236 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/d33d2e3d36b5b0133e43ec2ac0dd078264b472d4.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.236 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/7c7aad44e8e8053d8a20803823a9d4d8286c3211.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.236 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/dc7984c0b68f455f5b3c7805c89192928e687f43.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.246 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/4bed956cd672ae55abe84dffbb9e91e1a0d78e61.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.246 +08:00 [ERR] Failed to load image from http://i2.hdslb.com/bfs/archive/f01f58cda046f01826493ba39bef5dca01f3a8f7.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:31.503 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 23:20:31.525 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 23:20:32.725 +08:00 [ERR] Failed to load image from http://i2.hdslb.com/bfs/archive/c2c993d8c5528946fe16723f75b42afff607ecaf.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:32.727 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/8a556c6014d3644ea5a39707930a07829500e19c.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:32.727 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/1ac922e73d261113c15080b429ace183232ed753.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:32.727 +08:00 [ERR] Failed to load image from http://i2.hdslb.com/bfs/archive/5f5b7310a4b14258579ec6c18f7a751dba33b78a.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:32.728 +08:00 [ERR] Failed to load image from http://i1.hdslb.com/bfs/archive/f90d53d9ac8ac68644095a3301f6aa9499dd3a9a.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:32.728 +08:00 [ERR] Failed to load image from http://i2.hdslb.com/bfs/archive/cba10901e21374e36b5ac98e0334fa613e07b923.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:32.729 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/72704ec6756c513ea35df6be3e9776fedb3d4b47.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:20:32.729 +08:00 [ERR] Failed to load image from http://i0.hdslb.com/bfs/archive/d5218066bf7a0dff580adf3a22a49bd80f966b09.jpg@672w_378h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-13 23:22:38.220 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:22:49.234 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 23:22:49.814 +08:00 [INF] 选流：清晰度 120，偏好编码 hev，可选编码 avc1.640033/hvc1.1.6.L153.90/av01.0.12M.08.0.110.01.01.01.0，选中 hvc1.1.6.L153.90
+2026-10-13 23:22:50.070 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:22:50.070 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:22:50.164 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:22:50.164 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 23:22:50.166 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 23:22:50.663 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:23:04.041 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-13 23:23:04.615 +08:00 [INF] 选流：清晰度 120，偏好编码 hev，可选编码 avc1.640033/hvc1.1.6.L153.90/av01.0.12M.08.0.110.01.01.01.0，选中 hvc1.1.6.L153.90
+2026-10-13 23:23:04.750 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:23:04.751 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:23:04.810 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-13 23:23:04.849 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 23:23:04.850 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-13 23:23:39.097 +08:00 [INF] [MPV] Event received: AudioReconfig

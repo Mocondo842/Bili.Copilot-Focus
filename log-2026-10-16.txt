@@ -1,0 +1,37 @@
+2026-10-16 23:45:33.340 +08:00 [INF] UI 看门狗已启动（阈值 800ms，周期 500ms）
+2026-10-16 23:45:33.369 +08:00 [INF] BiliCopilot.Visor started successfully.
+2026-10-16 23:45:33.601 +08:00 [INF] App version: 2.2511.2.916
+2026-10-16 23:45:33.852 +08:00 [WRN] UI 线程卡顿 321217ms（阈值 800ms）
+2026-10-16 23:45:33.852 +08:00 [WRN] 卡顿前最近动作：23:45:33.786 导航 MomentPage
+2026-10-16 23:45:33.884 +08:00 [INF] Visor initialized successfully.
+2026-10-16 23:45:34.346 +08:00 [WRN] UI 线程恢复响应，本次卡顿累计约 321710ms（其中 GC 暂停 3.9479999999999986ms）
+2026-10-16 23:46:05.530 +08:00 [INF] Set Mpv log level to Warn.
+2026-10-16 23:46:06.228 +08:00 [INF] 选流：清晰度 120，偏好编码 hev，可选编码 avc1.640034/hvc1.1.6.L153.90/av01.0.13M.08.0.110.01.01.01.0，选中 hvc1.1.6.L153.90
+2026-10-16 23:46:06.578 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-16 23:46:06.583 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-16 23:46:06.657 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-16 23:46:06.657 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-16 23:46:06.661 +08:00 [INF] [MPV] Event received: VideoReconfig
+2026-10-16 23:46:07.048 +08:00 [INF] 弹幕：渲染器 "Win2D"，滚动 false / 顶部 false / 底部 false
+2026-10-16 23:51:24.275 +08:00 [INF] [MPV] Event received: AudioReconfig
+2026-10-16 23:51:53.664 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/face/229577544b01457898c4714bb3f812d1b51130dd.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-16 23:51:53.690 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/face/229577544b01457898c4714bb3f812d1b51130dd.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
+2026-10-16 23:51:53.697 +08:00 [ERR] Failed to load image from https://i1.hdslb.com/bfs/face/229577544b01457898c4714bb3f812d1b51130dd.jpg@96w_96h_1c.jpg
+System.Threading.Tasks.TaskCanceledException: A task was canceled.
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<GetOrCreateRequestAsync>d__67.MoveNext() + 0x59
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<FetchImageAsync>d__69.MoveNext() + 0xa2e
+--- End of stack trace from previous location ---
+   at Richasy.WinUIKernel.Share.Base.ImageExBase.<LoadImageInternalAsync>d__62.MoveNext() + 0x42f
