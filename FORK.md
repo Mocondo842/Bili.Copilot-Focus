@@ -157,7 +157,7 @@
 
 - 触发：推送到 focus/derec（`src/**`、`scripts/**` 或该 workflow 本身有改动时）；也支持手填版本号的手动触发。
 - 产物：`BiliCopilot.UI_<版本>_x64.msix` + `focus-sideload.cer` + `Install-Focus.ps1/.cmd` + `安装说明.txt`，打成 zip 后同时进 **Actions artifact** 和 **`focus-<版本>` 草稿发布（Draft-first，2.2511.2.919 起）**。草稿对公众完全不可见（不进 Releases 页面、不触发通知、资产无公开下载链接），所以 Releases 页面不再随构建堆积；**每次构建后自动清理 `focus-*` 历史发布（含草稿），只保留最近 3 个**，旧的连同 tag 一起删（别的 tag 不碰）。默认版本见 workflow 的 `DEFAULT_VERSION`（每次改动都要上抬，否则 `Add-AppxPackage` 不会覆盖安装已装的旧版本）。
-- **取包（草稿按 tag 查找的端点会 404，`gh release download <tag>` 不可用）**：走「列表端点找 release id → asset id → `Accept: application/octet-stream` 拉取」——CI 里的回拉验收步骤（`Verify draft asset via API`）每次构建都会自动跑一遍这条链路并比对 sha256；本机取包命令直接从构建报告 `ci/last-build.md` 的「拉取本次产物」一节复制（需要 `gh auth login` 过的协作者身份）。
+- **取包**：`gh release download focus-<版本> --repo Mocondo842/Bili.Copilot-Focus --pattern "*.zip" --clobber`（**gh 2.103+ 已支持按 tag 下载草稿**，实测可用；命令直接从构建报告 `ci/last-build.md` 复制）。原始 REST API 的「按 tag 查找」端点对草稿仍返回 404、PS 5.1 向原生程序传参还会弄丢 jq 表达式里的双引号——所以 CI 里的回拉验收保留「列表端点找 release id → asset id → octet-stream」链路（步骤 `Verify draft asset via API`，每次构建自动跑一遍并比对 sha256，不依赖 gh 版本）；本机不要手写这套（2026-10-25 实测：PS 5.1 里 jq 引号被吞、ConvertFrom-Json 也解析不了大 JSON，全是坑）。
 - 自检：构建前跑 `scripts/fork_check.ps1` 锚点守卫；构建后跑 `signtool verify /pa`；`APPX0105/APPX0107`（签名相关告警）被升级为错误——**签名没成功就构建失败**，不会又产出一个装不上的包。
 - 构建报告：无论成败都推到 `ci/logs` 分支的 `ci/last-build.md`（含 job 状态、产物清单、诊断与日志尾部），这是没有 API token 时也能读到 CI 日志的通道。
 

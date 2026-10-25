@@ -291,15 +291,6 @@ jobs:
           $errs = $lines | Select-String -Pattern 'error [A-Z]{2,}\d+|error MSB\d+|: error|Exception|FAILED' | Select-Object -Last 80
           $msix = Get-ChildItem -Path (Join-Path $env:GITHUB_WORKSPACE 'AppPackages') -Filter *.msix -Recurse -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path 'ci' | Out-Null
-          # 本机取包命令：用字面 here-string 写，避免双层引号转义出错（报告里的命令要能直接复制运行）
-          $pullHelp = @'
-          $repo = 'Mocondo842/Bili.Copilot-Focus'
-          # 最新一条草稿就是本次构建（focus-* 历史只保留最近 3 个）
-          $rel = gh api "repos/$repo/releases?per_page=10" --jq '.[] | select(.draft) | .id' | Select-Object -First 1
-          gh api "repos/$repo/releases/$rel" --jq '.assets[].name'    # 看清单
-          $aid = gh api "repos/$repo/releases/$rel" --jq '.assets[] | select(.name | endswith(".zip")) | .id'
-          Invoke-WebRequest -Headers @{ Authorization = 'Bearer ' + (gh auth token); Accept = 'application/octet-stream' } -Uri "https://api.github.com/repos/$repo/releases/assets/$aid" -OutFile focus-latest.zip
-          '@
           $body = @(
             "# Fork build report"
             ""
@@ -341,10 +332,10 @@ jobs:
             ($(try { (Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'FinalPackages') -ErrorAction Stop | ForEach-Object { $_.Name + '  ' + [math]::Round($_.Length/1MB,1) + ' MB' }) -join "`n" } catch { '(列不出 FinalPackages)' }))
             '```'
             ""
-            "## 拉取本次产物（草稿发布，需协作者 gh 登录；命令在本机 PowerShell 里执行）"
+            "## 拉取本次产物（草稿发布；gh 2.103+ 已支持按 tag 下载草稿，一行即可，整行复制执行）"
             ""
             '```powershell'
-            $pullHelp
+            'gh release download focus-${{ steps.ver.outputs.version }} --repo Mocondo842/Bili.Copilot-Focus --pattern "*.zip" --clobber'
             '```'
             ""
             "## 交付脚本行尾/编码体检"
