@@ -193,6 +193,8 @@ git push origin focus/derec
 
 补丁只有 4 个文件 5 行，真正会冲突的只有「同一行恰好被上游改过」这一种情况。锚点原文：
 
+> 另：`README.md` 在本分支已改写为 fork 专属内容（安装/下载/构建说明），同步上游时**不要**用上游版本整体覆盖——上游对 README 的更新按需摘抄合并即可。
+
 ```csharp
 // G1 锚点：                              if (_view.Recommends is not null)
 //   改成：                               if (!DeRecommendToolkit.Disabled && _view.Recommends is not null)
