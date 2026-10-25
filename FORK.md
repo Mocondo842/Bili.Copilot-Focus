@@ -87,6 +87,7 @@
 
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |
 | F8 | 标题里出现 `&quot;` 之类的实体（如搜索结果里 `"虚构"` 显示成 `&quot;虚构&quot;`），卡片、播放页标题、窗口标题都带着 | B 站**搜索等接口**的标题/简介带 HTML 实体转义，而 bili-kernel 的搜索适配器只剥 `<em class="keyword">` 高亮标签、**没做实体解码**（`/x/web-interface/view` 详情接口返回的是原文，所以只有搜索/动态来的条目中招）。修法：`AppToolkit.DecodeHtml()`（`WebUtility.HtmlDecode`，对无实体原文是无操作）套在展示文本上——视频卡片 Title/Description/Subtitle、播放页两个 connector 的 Title/Subtitle/Description、mpv `MediaName`（窗口标题/SMTC 的来源）、Pin、弹幕面板标题，共 16 处。**没做**：PGC/专栏搜索卡片没有 Title 透传属性（直接绑 `Data.Identifier.Title`），要动 XAML 绑定，本轮不动 |
+| F9 | 2.2511.2.917 真机反馈（plan.md A）：①一级评论区仍有缩略图不加载（但点开大图有内容）；②「查看回复」进二级界面后主楼部分图消失且无法点开（大图窗口里能切到这些图） | P3 只恢复了九宫格**数据源**，单个 `BasicCoverImage` 的恢复不可靠：13 天日志证实失败 98.7% 是「同一秒内批量取消」，U19 的**立即**重试 2 次全落在同一个取消窗口里就耗尽了预算；「查看回复」折叠/展开面板又不触发 `Loaded`，没有重载入口。改成：重试带退避延迟（600ms 起、翻倍，跳出取消窗口，每轮预算 4 次）、`Loaded` 时若从未成功（`DrawImage` 未执行过）就**强制重赋 Source**（x:Bind 对同值 Uri 不触发变更，回收复用的容器光重置预算没用）、终身上限 8 次防真 404 随滚动无限重试。若「无法点开」仍复现，说明二级面板的 Gallery 数据源另有问题，需新日志定位 |
 
 > `AUDCLNT_E_DEVICE_INVALIDATED` 是 WASAPI 音频端点被系统回收（切设备/蓝牙断开/休眠）时报的错，音频输出重建由 libmpv 的 wasapi AO 负责，不在应用层；这块没动。F4 针对的是同一条日志里那串音频流地址打开失败的报错。
 
@@ -155,7 +156,8 @@
 `.github/workflows/fork-build-win-x64.yml`（只在 focus/derec 存在）在 GitHub 托管的 `windows-latest` 上打包：
 
 - 触发：推送到 focus/derec（`src/**`、`scripts/**` 或该 workflow 本身有改动时）；也支持手填版本号的手动触发。
-- 产物：`BiliCopilot.UI_<版本>_x64.msix` + `focus-sideload.cer` + `Install.ps1` + `安装说明.txt`，打成 zip 后同时进 **Actions artifact** 和 **`focus-<版本>` 预发布**（同名 tag 会先删后建）。默认版本见 workflow 的 `DEFAULT_VERSION`（每次改动都要上抬，否则 `Add-AppxPackage` 不会覆盖安装已装的旧版本）。
+- 产物：`BiliCopilot.UI_<版本>_x64.msix` + `focus-sideload.cer` + `Install-Focus.ps1/.cmd` + `安装说明.txt`，打成 zip 后同时进 **Actions artifact** 和 **`focus-<版本>` 草稿发布（Draft-first，2.2511.2.919 起）**。草稿对公众完全不可见（不进 Releases 页面、不触发通知、资产无公开下载链接），所以 Releases 页面不再随构建堆积；**每次构建后自动清理 `focus-*` 历史发布（含草稿），只保留最近 3 个**，旧的连同 tag 一起删（别的 tag 不碰）。默认版本见 workflow 的 `DEFAULT_VERSION`（每次改动都要上抬，否则 `Add-AppxPackage` 不会覆盖安装已装的旧版本）。
+- **取包（草稿按 tag 查找的端点会 404，`gh release download <tag>` 不可用）**：走「列表端点找 release id → asset id → `Accept: application/octet-stream` 拉取」——CI 里的回拉验收步骤（`Verify draft asset via API`）每次构建都会自动跑一遍这条链路并比对 sha256；本机取包命令直接从构建报告 `ci/last-build.md` 的「拉取本次产物」一节复制（需要 `gh auth login` 过的协作者身份）。
 - 自检：构建前跑 `scripts/fork_check.ps1` 锚点守卫；构建后跑 `signtool verify /pa`；`APPX0105/APPX0107`（签名相关告警）被升级为错误——**签名没成功就构建失败**，不会又产出一个装不上的包。
 - 构建报告：无论成败都推到 `ci/logs` 分支的 `ci/last-build.md`（含 job 状态、产物清单、诊断与日志尾部），这是没有 API token 时也能读到 CI 日志的通道。
 

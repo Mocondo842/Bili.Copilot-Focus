@@ -91,6 +91,9 @@ Check 'SelectNodeAsync(string? host)' 1 'P9 手选节点命令（按进度重播
 Check 'FillNodeMenu();' 1 'P10 右键菜单打开时填充播放节点'
 Check 'public static string? DecodeHtml(string? text)' 1 'F8 实体解码 helper'
 Check 'AppToolkit.DecodeHtml(' 16 'F8 展示文本统一解码（16 处）'
+Check 'private bool _succeeded;' 1 'F9 图片成功标志（DrawImage 置位）'
+Check 'ReloadIfPending(' 3 'F9 延迟重载入口（定义 + 两条调度路径）'
+Check 'BaseRetryDelayMs << ' 1 'F9 重试退避延迟（跳出批量取消窗口）'
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 Check 的搜索范围内，单独查）
 foreach ($item in @(
