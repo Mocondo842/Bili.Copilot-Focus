@@ -30,6 +30,8 @@ internal sealed partial class PgcMediaSourceResolver(IPlayerService playerServic
         _playbackInfo = default;
         _initTask?.TrySetCanceled();
         _initCts?.Cancel();
+        // fork：换视频时清掉上一个视频里手动选过的播放节点。
+        ResetNodeState();
     }
 
     internal void ResetSnapshot(MediaSnapshot snapshot)
@@ -205,20 +207,39 @@ internal sealed partial class PgcMediaSourceResolver(IPlayerService playerServic
         var audioUrl = aSeg?.BaseUrl;
 
         // fork：默认避开 PCDN（mcdn/szbdyd）节点——这类节点打不开时表现为整段没声音或卡住。
-        if (SettingsToolkit.ReadLocalSetting(SettingNames.PlayWithoutP2P, true))
+        // P2：节点候选统一交给右键菜单「播放节点」展示；用户手选的节点优先于「不使用P2P」过滤。
+        var videoCandidates = CollectNodeCandidates(vSeg?.BaseUrl, vSeg?.BackupUrls);
+        var audioCandidates = CollectNodeCandidates(aSeg?.BaseUrl, aSeg?.BackupUrls);
+        var withoutP2P = SettingsToolkit.ReadLocalSetting(SettingNames.PlayWithoutP2P, true);
+        if (videoCandidates.Length > 0)
         {
-            if (vSeg?.BackupUrls is not null)
+            var preferred = PreferredNodeHost is null
+                ? default
+                : Array.Find(videoCandidates, p => GetHost(p) == PreferredNodeHost);
+            if (preferred is not null)
             {
-                string[] videoUrls = [vSeg?.BaseUrl, .. vSeg?.BackupUrls];
-                videoUrl = Array.Find(videoUrls, p => !AppToolkit.IsP2PUrl(p)) ?? vSeg?.BaseUrl;
+                videoUrl = preferred;
             }
-
-            if (aSeg?.BackupUrls is not null)
+            else if (withoutP2P)
             {
-                string[] audioUrls = [aSeg?.BaseUrl, .. aSeg?.BackupUrls];
-                audioUrl = Array.Find(audioUrls, p => !AppToolkit.IsP2PUrl(p)) ?? aSeg?.BaseUrl;
+                var chosen = Array.Find(videoCandidates, p => !AppToolkit.IsP2PUrl(p)) ?? videoCandidates[0];
+                if (AppToolkit.IsP2PUrl(chosen))
+                {
+                    logger.LogWarning("节点：清晰度 {Quality} 的 {Count} 个候选节点全部是 PCDN（mcdn/szbdyd），无法避开", selectedFormat.Quality, videoCandidates.Length);
+                }
+
+                videoUrl = chosen;
             }
         }
+
+        if (withoutP2P && audioCandidates.Length > 0)
+        {
+            audioUrl = Array.Find(audioCandidates, p => !AppToolkit.IsP2PUrl(p)) ?? audioCandidates[0];
+        }
+
+        // 把候选与结果交给基类，供右键菜单展示与手选。
+        var nodeHosts = videoCandidates.Select(GetHost).OfType<string>().Distinct().ToArray();
+        UpdateNodeState(nodeHosts, GetHost(videoUrl));
 
         SettingsToolkit.WriteLocalSetting(SettingNames.LastSelectedPgcQuality, selectedFormat.Quality);
         return (videoUrl, audioUrl);

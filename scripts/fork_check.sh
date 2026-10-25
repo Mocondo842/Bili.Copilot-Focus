@@ -77,6 +77,16 @@ check "WriteTo.Async(a => a.File("                                     1 "U5 日
 check "IsCardAnimationEnabled"                                        2 "U6 卡片动画开关接入启动路径"
 check "AppToolkit.GetCulture(primaryLan)"                              2 "U7 区域性对象按语言缓存（两条目路径）"
 check "EmojiRegex"                                                    2 "U8 表情正则提为静态"
+check "_ackLatencyTicks = 0;"                                          1 "P1 看门狗基准初始化为 0（不再把开机毫秒数当卡顿）"
+check "foreach (var player in Players.ToList())"                       1 "P2 打开新视频前先退出已有播放器"
+check "Text?.Pictures?.Count > 0 && Gallery is not null"               1 "P3 评论九宫格入树恢复"
+check "CollectNodeCandidates("                                         5 "P4 节点候选收集（基类定义 + 视频/音频 × 两个 resolver）"
+check "UpdateNodeState("                                               3 "P5 候选交给基类（基类定义 + 两个 resolver）"
+check "ResetNodeState();"                                              2 "P6 换视频重置手选节点（两个 resolver）"
+check "无法避开"                                                        2 "P7 全 PCDN 候选告警（两个 resolver）"
+check "GetVideoNodes()"                                                1 "P8 播放器暴露节点候选"
+check "SelectNodeAsync(string? host)"                                  1 "P9 手选节点命令（按进度重播）"
+check "FillNodeMenu();"                                                1 "P10 右键菜单打开时填充播放节点"
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 check 的搜索范围内，单独查）
 xcheck() { # $1=文件  $2=锚点文本  $3=说明
@@ -88,6 +98,9 @@ xcheck src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCard
 xcheck src/Desktop/BiliCopilot.UI/Controls/Components/MomentCardControl/PersonalVideoMomentPresenter.xaml 'ViewModel.InnerVideo' "C15 用户空间卡片简介按钮"
 xcheck src/Desktop/BiliCopilot.UI/Controls/Comment/CommentItemControl.xaml 'MaxLines="0"' "C16 评论不截断"
 xcheck src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml '<comment:CommentOverlayPanel' "C17 搜索页评论浮层"
+xcheck src/Desktop/BiliCopilot.UI/Controls/Core/PlayerInteractivePanel.xaml 'x:Name="PlayerNodeItem"' "P11 播放节点子菜单就位"
+xcheck src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw '<data name="PlayerNode"' "P12 播放节点文案"
+xcheck src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw '<data name="NodeDefault"' "P13 播放节点默认项文案"
 xcheck src/Desktop/BiliCopilot.UI/ViewModels/Items/SearchSuggestItemViewModel.cs '[GeneratedBindableCustomProperty]' "U24 联想 VM 支持运行时绑定（TextMemberPath 需要）"
 xcheck src/Desktop/BiliCopilot.UI/ViewModels/Core/PlayerViewModel/PlayerViewModel.cs 'OnCurrentVolumeChanged' "U28 音量变化即持久化"
 xcheck src/Desktop/BiliCopilot.UI/Controls/Danmaku/VideoDanmakuPanel.xaml.cs '弹幕：渲染器' "U26 日志记录弹幕渲染器与开关状态"

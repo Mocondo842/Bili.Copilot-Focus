@@ -74,7 +74,10 @@ internal static class UiStallWatchdog
 
             _queue = GlobalDependencies.Kernel.GetRequiredService<DispatcherQueue>();
             _logger = GlobalDependencies.Kernel.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(UiStallWatchdog));
-            _ackLatencyTicks = Stopwatch.GetTimestamp();
+            // 必须初始化为 0（延迟量），不能是 Stopwatch.GetTimestamp()——那是绝对时间戳，
+            // 首 tick 会把「开机以来的毫秒数」当成卡顿时长报出来（实测每次启动都有一条 8 位数假卡顿）。
+            // 首 tick 读到 0 不报告；真实延迟由首 tick 投递的回调写入、次 tick 读出。
+            _ackLatencyTicks = 0;
         _lastMinorReportMs = Stopwatch.GetTimestamp() * 1000 / Stopwatch.Frequency;
             _timer = new Timer(OnTick, null, PeriodMs, PeriodMs);
             _logger.LogInformation("UI 看门狗已启动（阈值 {Threshold}ms，周期 {Period}ms）", ThresholdMs, PeriodMs);

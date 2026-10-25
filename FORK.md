@@ -14,7 +14,7 @@
 | `master` | 上游镜像，只用于同步 | **不在 master 上提交**；用 GitHub 的「Sync fork」把它对齐上游 |
 | `focus/derec` | 去推荐化补丁分支（本分支） | 上面的补丁只在这里提交；每次同步后 `master` 合进本分支 |
 
-## 补丁清单（相对上游 master：`src/` 35 files changed, 1237 insertions(+), 159 deletions(-)；含本 fork 自带的构建/安装脚本与文档共 44 files changed, 2263 insertions(+), 222 deletions(-)）
+## 补丁清单（相对上游 master：`src/` 55 files changed, 1875 insertions(+), 206 deletions(-)；含本 fork 自带的构建/安装脚本与文档（不含运行日志）共 65 files changed, 3074 insertions(+), 269 deletions(-)）
 
 | 编号 | 文件 | 改动 |
 |---|---|---|
@@ -94,6 +94,28 @@
 - 快进 / 快退 / 音量只在**播放控制栏隐藏**时生效（控制栏显示时方向键要留给界面焦点）；
 - 统计信息覆盖层打开时，数字键 `1`-`5`、上下键交给播放器本身（`stats.lua` 的强制绑定）；
 - 长按右方向键三倍速只在「快进」仍绑在右方向键上时才触发。
+
+## plan.md 六项优化（P 系列，2026-10-25）
+
+`plan.md` 记录的 6 项事项的处置。问题定义、日志证据与验收标准见仓库根目录的分支 PM 文件 `PM-BiliFocus-优化R1-v1.md`；
+13 天运行日志（`log-2026-10-11~25.txt`）的聚类结论：
+
+- 图片「加载失败」1601 条中 **98.7% 是 `TaskCanceledException`（被取消）**、90.8% 集中在同一秒批量出现——是列表回收取消在途下载，不是网络故障（真 404 仅 18 条）；
+- 4 次 mpv `Failed to open` **全部是 `mcdn.bilivideo.cn:8082`（PCDN）**——F4 的「不使用P2P」只在 BackupUrls 非空时避让，BaseUrl 本身是 PCDN 时无路可逃；
+- 「几十秒卡顿」的 8 位数毫秒记录**全部是看门狗启动误报**（`_ackLatencyTicks` 被初始化成绝对时间戳，首 tick 把开机以来毫秒数当卡顿报出）；设置页相关真实卡顿仅 2 条、约 1 秒、均为冷启动。
+
+| 编号 | 问题（plan.md 条目） | 改动 |
+|---|---|---|
+| P1 | （plan#6 观测）看门狗每次启动都报一条 8 位数假卡顿（13 天 19 条），污染日志 | `UiStallWatchdog.Start()`：`_ackLatencyTicks` 初始值从 `Stopwatch.GetTimestamp()` 改为 `0`（延迟量）；首 tick 不报告也不进微卡顿统计，真实延迟由首 tick 投递的回调写入、次 tick 读出 |
+| P2 | （plan#5）播放 A 时点开 B，A 窗口继续出声 | `AppViewModel.OpenPlayerAsync`：打开新播放器前把 `Players` 里已有的每个播放器 `DisposeAsync`（停播放 + 关窗口 + 移出集合，与手动关窗同一条释放路径）；`PlayerViewModel` 是瞬时的，旧窗口本来永远不会自己停 |
+| P3 | （plan#2/#3）评论图片部分不加载、点开查看回复回来后主楼图又消失 | `EmoteTextBlock`：`OnControlUnloaded` 清空九宫格数据源后，重新入树时 `Text` 未变化、`OnTextChanged` 不会再来一次——`Loaded` 时按当前 `Text` 恢复 `ItemsSource`。列表回收、回复面板折叠共用这一处修复 |
+| P4 | （plan#4）没有「更换播放节点」的入口 | 播放节点功能：`MediaSourceResolverBase` 新增 `PreferredNodeHost` / `VideoNodeHosts` / `CurrentNodeHost` 与 `CollectNodeCandidates`；两个 resolver 的 `GetPlayUrls` 统一走候选数组，优先级为**手选节点 > 不使用P2P 过滤 > BaseUrl**（行为兼容：未手选时与原逻辑一致），并把候选/结果交给基类；`PlayerViewModel` 新增 `GetVideoNodes()` 与 `SelectNodeAsync`（记住节点后按当前进度重播，与切清晰度同一条 `ReplayAsync` 通路）；播放器右键菜单新增「播放节点」子菜单（XAML 占位 + `OnFlyoutOpened` 动态填充：默认项 + 候选主机单选，当前节点勾选，无候选时禁用）；换视频（resolver `Initialize`）时手选重置 |
+| P5 | （plan#1 可观测）候选全是 PCDN 时静默回退，日志无从归因 | 两个 resolver：全 PCDN 候选回退 BaseUrl 时写 WARN「节点：清晰度 X 的 N 个候选节点全部是 PCDN，无法避开」 |
+| P6 | 工程纪律 | `fork_check.ps1/.sh` 新增 P1–P13 锚点（含 resw 文案与 XAML 占位）；CI `DEFAULT_VERSION` 抬到 `2.2511.2.917` |
+
+语义约定（plan#4 说的「设置」）：设置页既有的「不使用P2P」开关就是**默认节点策略**；右键菜单是**当前视频内的手动覆盖**，不跨视频记忆——是否要持久化见 PM 文件待确认 Q2。
+
+> **未验证**：本批改动与仓库既有补丁一样，本机没有 VS / Windows App SDK，从未编译；构建依赖 GitHub Actions（推送后自动触发）。逻辑级自检只有 `fork_check` 锚点全过。
 
 ## 安装器（fork 自带，替代上游 Install.ps1）
 

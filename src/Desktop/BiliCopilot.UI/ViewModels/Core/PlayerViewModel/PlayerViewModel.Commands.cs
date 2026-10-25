@@ -2,6 +2,7 @@
 
 using BiliCopilot.UI.Controls.Danmaku;
 using BiliCopilot.UI.Models.Constants;
+using BiliCopilot.UI.Resolvers;
 using BiliCopilot.UI.Toolkits;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -533,6 +534,27 @@ public sealed partial class PlayerViewModel
             Clipboard.SetContent(dp);
             Window?.ShowTip(ResourceToolkit.GetLocalizedString(Models.Constants.StringNames.Copied), InfoType.Success);
         }
+    }
+
+    /// <summary>
+    /// 获取当前视频流可用的播放节点候选（供播放器右键菜单展示）；未起播或无候选时返回 null.
+    /// </summary>
+    internal (IReadOnlyList<string> Hosts, string? CurrentHost, string? PreferredHost)? GetVideoNodes()
+        => _sourceResolver is MediaSourceResolverBase resolver && resolver.VideoNodeHosts is { Count: > 0 } hosts
+            ? (hosts, resolver.CurrentNodeHost, resolver.PreferredNodeHost)
+            : default;
+
+    [RelayCommand]
+    private async Task SelectNodeAsync(string? host)
+    {
+        if (_sourceResolver is not MediaSourceResolverBase resolver || Player is null)
+        {
+            return;
+        }
+
+        // 与切换清晰度同一条通路：记住节点后按当前进度重播；host 为空表示回到默认规则。
+        resolver.SetPreferredNodeHost(host);
+        await Player.ReplayAsync(Player.Position);
     }
 
     [RelayCommand]

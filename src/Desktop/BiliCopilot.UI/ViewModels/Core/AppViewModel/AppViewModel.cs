@@ -136,6 +136,14 @@ public sealed partial class AppViewModel : ViewModelBase
     private async Task OpenPlayerAsync(MediaSnapshot snapshot)
     {
         BiliCopilot.UI.Toolkits.UiStallWatchdog.Mark("打开播放器");
+        // fork：PlayerViewModel 是瞬时的，点新视频会另开一个播放窗口，旧窗口不会自己停——
+        // 两个视频同时出声，只能手动逐个关。打开新的之前，把已有的播放器连同窗口一起退掉
+        // （DisposeAsync 会停播放、关窗口并把自己从 Players 移除），与用户手动关窗走同一条释放路径。
+        foreach (var player in Players.ToList())
+        {
+            await player.DisposeAsync();
+        }
+
         var playerVM = this.Get<PlayerViewModel>();
         this.Get<AppViewModel>().Players.Add(playerVM);
         await playerVM.InitializeAsync(snapshot);

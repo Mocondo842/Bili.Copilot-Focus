@@ -79,6 +79,16 @@ Check 'WriteTo.Async(a => a.File(' 1 'U5 日志异步落盘'
 Check 'IsCardAnimationEnabled' 2 'U6 卡片动画开关接入启动路径'
 Check 'AppToolkit.GetCulture(primaryLan)' 2 'U7 区域性对象按语言缓存'
 Check 'EmojiRegex' 2 'U8 表情正则提为静态'
+Check '_ackLatencyTicks = 0;' 1 'P1 看门狗基准初始化为 0（不再把开机毫秒数当卡顿）'
+Check 'foreach (var player in Players.ToList())' 1 'P2 打开新视频前先退出已有播放器'
+Check 'Text?.Pictures?.Count > 0 && Gallery is not null' 1 'P3 评论九宫格入树恢复'
+Check 'CollectNodeCandidates(' 5 'P4 节点候选收集（基类定义 + 视频/音频 × 两个 resolver）'
+Check 'UpdateNodeState(' 3 'P5 候选交给基类（基类定义 + 两个 resolver）'
+Check 'ResetNodeState();' 2 'P6 换视频重置手选节点（两个 resolver）'
+Check '无法避开' 2 'P7 全 PCDN 候选告警（两个 resolver）'
+Check 'GetVideoNodes()' 1 'P8 播放器暴露节点候选'
+Check 'SelectNodeAsync(string? host)' 1 'P9 手选节点命令（按进度重播）'
+Check 'FillNodeMenu();' 1 'P10 右键菜单打开时填充播放节点'
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 Check 的搜索范围内，单独查）
 foreach ($item in @(
@@ -98,7 +108,10 @@ foreach ($item in @(
     @('src/Desktop/BiliCopilot.UI/Controls/Components/AppSearchBox.xaml', 'TextMemberPath="SearchContent"', 'U21 联想选中后写回输入框'),
     @('src/Desktop/BiliCopilot.UI/Controls/Components/AppSearchBox.xaml', 'UpdateTextOnSelect="True"', 'U22 联想可选中'),
     @('src/Desktop/BiliCopilot.UI/Toolkits/UiStallWatchdog.cs', '其中 GC 暂停', 'U23 卡顿日志带 GC 暂停增量'),
-    @('src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml', '<comment:CommentOverlayPanel', 'C17 搜索页评论浮层'))) {
+    @('src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml', '<comment:CommentOverlayPanel', 'C17 搜索页评论浮层'),
+    @('src/Desktop/BiliCopilot.UI/Controls/Core/PlayerInteractivePanel.xaml', 'x:Name="PlayerNodeItem"', 'P11 播放节点子菜单就位'),
+    @('src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw', '<data name="PlayerNode"', 'P12 播放节点文案'),
+    @('src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw', '<data name="NodeDefault"', 'P13 播放节点默认项文案'))) {
     if (-not (Select-String -Path $item[0] -SimpleMatch -Pattern $item[1])) {
         Write-Host "MISSING ANCHOR: $($item[2])"
         $fail = 1

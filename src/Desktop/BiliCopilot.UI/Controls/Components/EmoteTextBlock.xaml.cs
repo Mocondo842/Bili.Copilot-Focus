@@ -31,7 +31,20 @@ public sealed partial class EmoteTextBlock : LayoutUserControlBase
     /// <summary>
     /// Initializes a new instance of the <see cref="EmoteTextBlock"/> class.
     /// </summary>
-    public EmoteTextBlock() => InitializeComponent();
+    public EmoteTextBlock()
+    {
+        InitializeComponent();
+        // OnControlUnloaded 会清空九宫格数据源；列表回收 / 面板折叠后重新入树时 Text 没有变化，
+        // OnTextChanged 不会再次触发，图片就会一直空白。入树时按当前 Text 恢复一次。
+        Loaded += (_, _) =>
+        {
+            if (Text?.Pictures?.Count > 0 && Gallery is not null)
+            {
+                Gallery.ItemsSource = Text.Pictures;
+                Gallery.Visibility = Visibility.Visible;
+            }
+        };
+    }
 
     /// <summary>
     /// 最大行数.

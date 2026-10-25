@@ -64,6 +64,12 @@
                 </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
             <MenuFlyoutSeparator />
+            <!--  fork：播放节点。候选与勾选状态在 OnFlyoutOpened 里按当前视频动态填充  -->
+            <MenuFlyoutSubItem
+                x:Name="PlayerNodeItem"
+                IsEnabled="False"
+                Style="{StaticResource ContextMenuFlyoutSubItemStyle}"
+                Text="{ext:Locale Name=PlayerNode}" />
             <MenuFlyoutSubItem Style="{StaticResource ContextMenuFlyoutSubItemStyle}" Text="{ext:Locale Name=Shaders}">
                 <MenuFlyoutSubItem.Icon>
                     <ic:SymbolIcon Symbol="VideoClipWand" />

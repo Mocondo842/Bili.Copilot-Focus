@@ -3141,6 +3141,12 @@
   <data name="Shaders" xml:space="preserve">
     <value>着色器</value>
   </data>
+  <data name="PlayerNode" xml:space="preserve">
+    <value>播放节点</value>
+  </data>
+  <data name="NodeDefault" xml:space="preserve">
+    <value>默认（跟随设置）</value>
+  </data>
   <data name="Anime4KAHigh" xml:space="preserve">
     <value>A（高质量）</value>
   </data>

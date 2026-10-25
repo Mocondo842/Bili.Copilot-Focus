@@ -420,6 +420,7 @@ public sealed partial class PlayerInteractivePanel : PlayerControlBase
     private void OnFlyoutOpened(object sender, object e)
     {
         ViewModel.IsPopupVisible = true;
+        FillNodeMenu();
         foreach (var item in Anime4KItem.Items.OfType<RadioMenuFlyoutItem>())
         {
             var tag = item.Tag.ToString();
@@ -475,6 +476,59 @@ public sealed partial class PlayerInteractivePanel : PlayerControlBase
     {
         ViewModel.IsPopupVisible = false;
     }
+
+    /// <summary>
+    /// 按当前视频的实际候选填充「播放节点」子菜单；每次菜单打开时重建，勾选状态不残留.
+    /// </summary>
+    private void FillNodeMenu()
+    {
+        PlayerNodeItem.Items.Clear();
+        var nodes = ViewModel?.GetVideoNodes();
+        if (nodes is null)
+        {
+            PlayerNodeItem.IsEnabled = false;
+            return;
+        }
+
+        PlayerNodeItem.IsEnabled = true;
+        var defaultItem = new RadioMenuFlyoutItem
+        {
+            Text = ResourceToolkit.GetLocalizedString(StringNames.NodeDefault),
+            GroupName = "PlayerNodeGroup",
+        };
+        ApplyRadioStyle(defaultItem);
+        PlayerNodeItem.Items.Add(defaultItem);
+        foreach (var host in nodes.Value.Hosts)
+        {
+            var item = new RadioMenuFlyoutItem
+            {
+                Text = host,
+                Tag = host,
+                GroupName = "PlayerNodeGroup",
+            };
+            ApplyRadioStyle(item);
+            PlayerNodeItem.Items.Add(item);
+            item.IsChecked = host == nodes.Value.CurrentHost;
+            item.Click += OnNodeItemClick;
+        }
+
+        defaultItem.IsChecked = string.IsNullOrEmpty(nodes.Value.PreferredHost);
+        defaultItem.Click += OnDefaultNodeItemClick;
+    }
+
+    private void ApplyRadioStyle(RadioMenuFlyoutItem item)
+    {
+        if (Resources.TryGetValue("ContextMenuFlyoutRadioItemStyle", out var value) && value is Style style)
+        {
+            item.Style = style;
+        }
+    }
+
+    private void OnDefaultNodeItemClick(object sender, RoutedEventArgs e)
+        => ViewModel?.SelectNodeCommand.Execute(null);
+
+    private void OnNodeItemClick(object sender, RoutedEventArgs e)
+        => ViewModel?.SelectNodeCommand.Execute((sender as FrameworkElement)?.Tag?.ToString());
 
     private void OnMenuButtonClick(object sender, RoutedEventArgs e)
     {
