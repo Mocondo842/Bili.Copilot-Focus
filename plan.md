@@ -1,7 +1,7 @@
 ## 改进
 ### 环境
-1.本软件：2.2511.2.916
-2.设备
+1. 本软件：2.2511.2.916
+2. 设备
 - 处理器	AMD Ryzen 7 H 260 w/ Radeon 780M Graphics (3.80 GHz)
 - 机带 RAM	32.0 GB (31.3 GB 可用)
 - 图形卡	NVIDIA GeForce RTX 5060 Laptop GPU (8 GB)
