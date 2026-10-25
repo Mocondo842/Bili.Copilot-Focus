@@ -89,6 +89,8 @@ Check '无法避开' 2 'P7 全 PCDN 候选告警（两个 resolver）'
 Check 'GetVideoNodes()' 1 'P8 播放器暴露节点候选'
 Check 'SelectNodeAsync(string? host)' 1 'P9 手选节点命令（按进度重播）'
 Check 'FillNodeMenu();' 1 'P10 右键菜单打开时填充播放节点'
+Check 'public static string? DecodeHtml(string? text)' 1 'F8 实体解码 helper'
+Check 'AppToolkit.DecodeHtml(' 16 'F8 展示文本统一解码（16 处）'
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 Check 的搜索范围内，单独查）
 foreach ($item in @(

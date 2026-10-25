@@ -21,7 +21,7 @@ public sealed partial class VideoConnectorViewModel
 
         _view = view;
         Cover = view.Information.Identifier.Cover.SourceUri;
-        Title = view.Information.Identifier.Title;
+        Title = AppToolkit.DecodeHtml(view.Information.Identifier.Title);
         AvId = view.Information.Identifier.Id;
         BvId = view.Information.BvId;
         IsMyVideo = _view.Information.Publisher.User.Id == this.Get<IBiliTokenResolver>().GetToken().UserId.ToString();

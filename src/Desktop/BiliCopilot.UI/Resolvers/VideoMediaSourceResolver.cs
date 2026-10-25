@@ -104,7 +104,7 @@ internal sealed partial class VideoMediaSourceResolver(IPlayerService playerServ
             UserAgent = userAgent,
             HttpHeaders = headers,
             EnableCookies = true,
-            MediaName = _snapshot.Video.Identifier.Title,
+            MediaName = AppToolkit.DecodeHtml(_snapshot.Video.Identifier.Title),
         };
 
         await LoadMediaInfoAsync();

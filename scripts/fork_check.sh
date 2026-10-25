@@ -87,6 +87,8 @@ check "无法避开"                                                        2 "P
 check "GetVideoNodes()"                                                1 "P8 播放器暴露节点候选"
 check "SelectNodeAsync(string? host)"                                  1 "P9 手选节点命令（按进度重播）"
 check "FillNodeMenu();"                                                1 "P10 右键菜单打开时填充播放节点"
+check "public static string? DecodeHtml(string? text)"                 1 "F8 实体解码 helper"
+check "AppToolkit.DecodeHtml("                                        16 "F8 展示文本统一解码（16 处）"
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 check 的搜索范围内，单独查）
 xcheck() { # $1=文件  $2=锚点文本  $3=说明

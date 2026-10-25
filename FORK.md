@@ -86,6 +86,7 @@
 > 阶段 B/C 未做（如 `Richasy.WinUIKernel.Share` preview4、FluentIcons 2.x、AgentKernel preview6、按实测卡顿点做的针对性优化）：理由与验收口径见设计文档 `.engine/cross-review-upgrade/draft.md`。
 
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |
+| F8 | 标题里出现 `&quot;` 之类的实体（如搜索结果里 `"虚构"` 显示成 `&quot;虚构&quot;`），卡片、播放页标题、窗口标题都带着 | B 站**搜索等接口**的标题/简介带 HTML 实体转义，而 bili-kernel 的搜索适配器只剥 `<em class="keyword">` 高亮标签、**没做实体解码**（`/x/web-interface/view` 详情接口返回的是原文，所以只有搜索/动态来的条目中招）。修法：`AppToolkit.DecodeHtml()`（`WebUtility.HtmlDecode`，对无实体原文是无操作）套在展示文本上——视频卡片 Title/Description/Subtitle、播放页两个 connector 的 Title/Subtitle/Description、mpv `MediaName`（窗口标题/SMTC 的来源）、Pin、弹幕面板标题，共 16 处。**没做**：PGC/专栏搜索卡片没有 Title 透传属性（直接绑 `Data.Identifier.Title`），要动 XAML 绑定，本轮不动 |
 
 > `AUDCLNT_E_DEVICE_INVALIDATED` 是 WASAPI 音频端点被系统回收（切设备/蓝牙断开/休眠）时报的错，音频输出重建由 libmpv 的 wasapi AO 负责，不在应用层；这块没动。F4 针对的是同一条日志里那串音频流地址打开失败的报错。
 

@@ -177,9 +177,9 @@ public sealed partial class VideoConnectorViewModel : ViewModelBase, IPlayerConn
 
     private void UpdateProperties()
     {
-        Title = _view.Information.Identifier.Title;
-        Subtitle = string.IsNullOrEmpty(_view.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description)) ? _view.Information.Publisher.User.Name : _view.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description);
-        Description = _view.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description) ?? string.Empty;
+        Title = AppToolkit.DecodeHtml(_view.Information.Identifier.Title);
+        Subtitle = AppToolkit.DecodeHtml(string.IsNullOrEmpty(_view.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description)) ? _view.Information.Publisher.User.Name : _view.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description));
+        Description = AppToolkit.DecodeHtml(_view.Information.GetExtensionIfNotNull<string>(VideoExtensionDataId.Description)) ?? string.Empty;
         Cover = _view.Information.Identifier.Cover?.Uri;
         var args = new PlayerInformationUpdatedEventArgs(Title, Subtitle, Cover);
         PropertiesUpdated?.Invoke(this, args);

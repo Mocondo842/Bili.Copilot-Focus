@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Bili Copilot. All rights reserved.
 
 using BiliCopilot.UI.Models;
+using BiliCopilot.UI.Toolkits;
 using BiliCopilot.UI.ViewModels.Components;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -86,7 +87,7 @@ public sealed partial class PgcConnectorViewModel : ViewModelBase, IPlayerConnec
             _view = await service.GetPgcPageDetailAsync(_snapshot.Season?.Identifier.Id, _snapshot.Episode?.Identifier.Id);
             System.Diagnostics.Debug.WriteLine($"Pgc Page Detail: {_view}");
             _episode = FindInitialEpisode(_snapshot.Episode?.Identifier.Id);
-            EpisodeTitle = _episode.Identifier.Title;
+            EpisodeTitle = AppToolkit.DecodeHtml(_episode.Identifier.Title);
             EpisodeId = _episode.Identifier.Id;
             UpdateProperties();
             InitializeView(_view);
@@ -103,9 +104,9 @@ public sealed partial class PgcConnectorViewModel : ViewModelBase, IPlayerConnec
 
     private void UpdateProperties()
     {
-        Title = _episode.Identifier.Title;
-        Subtitle = string.IsNullOrEmpty(_episode.GetExtensionIfNotNull<string>(EpisodeExtensionDataId.Subtitle)) ? _view.Information.Identifier.Title : _episode.GetExtensionIfNotNull<string>(EpisodeExtensionDataId.Subtitle);
-        Description = _view.Information.GetExtensionIfNotNull<string>(SeasonExtensionDataId.Description) ?? string.Empty;
+        Title = AppToolkit.DecodeHtml(_episode.Identifier.Title);
+        Subtitle = AppToolkit.DecodeHtml(string.IsNullOrEmpty(_episode.GetExtensionIfNotNull<string>(EpisodeExtensionDataId.Subtitle)) ? _view.Information.Identifier.Title : _episode.GetExtensionIfNotNull<string>(EpisodeExtensionDataId.Subtitle));
+        Description = AppToolkit.DecodeHtml(_view.Information.GetExtensionIfNotNull<string>(SeasonExtensionDataId.Description)) ?? string.Empty;
         Cover = _view.Information.Identifier.Cover?.Uri;
         var args = new PlayerInformationUpdatedEventArgs(Title, Subtitle, Cover);
         PropertiesUpdated?.Invoke(this, args);

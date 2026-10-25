@@ -194,7 +194,7 @@ public sealed partial class VideoConnectorViewModel
     [RelayCommand]
     private void Pin()
     {
-        var pinItem = new PinItem(_view.Information.Identifier.Id, _view.Information.Identifier.Title, _view.Information.Identifier.Cover.Uri.ToString(), PinContentType.Video);
+        var pinItem = new PinItem(_view.Information.Identifier.Id, AppToolkit.DecodeHtml(_view.Information.Identifier.Title), _view.Information.Identifier.Cover.Uri.ToString(), PinContentType.Video);
         this.Get<PinnerViewModel>().AddItemCommand.Execute(pinItem);
     }
 

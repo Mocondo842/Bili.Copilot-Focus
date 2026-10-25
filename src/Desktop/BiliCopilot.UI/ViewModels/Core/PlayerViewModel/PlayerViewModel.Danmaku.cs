@@ -33,7 +33,7 @@ public sealed partial class PlayerViewModel
                 var connector = Connector as VideoConnectorViewModel;
                 var aid = connector._view.Information.Identifier.Id;
                 var cid = connector._part.Identifier.Id;
-                Danmaku.Title = connector._view.Information.Identifier.Title;
+                Danmaku.Title = AppToolkit.DecodeHtml(connector._view.Information.Identifier.Title);
                 var totalMinutes = Math.Ceiling(TimeSpan.FromSeconds(connector._view.Information.Duration ?? 0).TotalMinutes);
                 var tasks = new List<Task>();
                 var segmentCount = Convert.ToInt32(Math.Ceiling(totalMinutes / 6.0)); // 6 minutes per segment

@@ -53,7 +53,7 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
         _showCommentAction = showCommentAction;
         var primaryLan = ApplicationLanguages.Languages[0];
         Style = style;
-        Title = info.Identifier.Title;
+        Title = AppToolkit.DecodeHtml(info.Identifier.Title);
         Cover = info.Identifier.Cover?.Uri;
         Author = info.Publisher?.User?.Name;
         Avatar = info.Publisher?.User?.Avatar?.Uri;
@@ -63,10 +63,10 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
         DanmakuCount = info.CommunityInformation?.DanmakuCount;
         LikeCount = info.CommunityInformation?.LikeCount;
         CommentCount = info.CommunityInformation?.CommentCount;
-        Description = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.Description);
+        Description = AppToolkit.DecodeHtml(info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.Description));
         TagName = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.TagName);
         RecommendReason = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.RecommendReason);
-        Subtitle = info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.Subtitle);
+        Subtitle = AppToolkit.DecodeHtml(info.GetExtensionIfNotNull<string?>(VideoExtensionDataId.Subtitle));
         CollectTime = info.GetExtensionIfNotNull<DateTimeOffset>(VideoExtensionDataId.CollectTime).Humanize(default, ChineseCulture);
         IsUserValid = info.Publisher?.User is not null;
         var progress = info.GetExtensionIfNotNull<int?>(VideoExtensionDataId.Progress);
@@ -238,7 +238,7 @@ public sealed partial class VideoItemViewModel : ViewModelBase<VideoInformation>
     [RelayCommand]
     private void Pin()
     {
-        var pinItem = new PinItem(Data.Identifier.Id, Data.Identifier.Title, Data.Identifier.Cover.Uri.ToString(), PinContentType.Video);
+        var pinItem = new PinItem(Data.Identifier.Id, AppToolkit.DecodeHtml(Data.Identifier.Title), Data.Identifier.Cover.Uri.ToString(), PinContentType.Video);
         this.Get<PinnerViewModel>().AddItemCommand.Execute(pinItem);
     }
 

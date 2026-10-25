@@ -27,6 +27,16 @@ internal sealed partial class AppToolkit : SharedAppToolkit
     public static CultureInfo GetCulture(string languageName)
         => CultureCache.GetOrAdd(languageName, static name => new CultureInfo(name));
 
+    /// <summary>
+    /// 解码 B 站接口文本里的 HTML 实体（引号、单引号、&amp; 符号等的转义形式）.
+    /// 搜索等接口的标题/简介带实体转义，bili-kernel 只剥了搜索关键字的高亮标签、没做解码（F8）；
+    /// 对不含实体的原文是无操作，展示文本统一套一层是安全的.
+    /// </summary>
+    /// <param name="text">原始文本.</param>
+    /// <returns>解码后的文本.</returns>
+    public static string? DecodeHtml(string? text)
+        => string.IsNullOrEmpty(text) ? text : System.Net.WebUtility.HtmlDecode(text);
+
     private const int VK_LCONTROL = 0xA2; // 左Ctrl键
     private const int VK_RCONTROL = 0xA3; // 右Ctrl键
     private const int VK_SHIFT = 0x10; // Shift键
