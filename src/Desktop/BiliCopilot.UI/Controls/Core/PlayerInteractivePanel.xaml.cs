@@ -514,6 +514,15 @@ public sealed partial class PlayerInteractivePanel : PlayerControlBase
 
         defaultItem.IsChecked = string.IsNullOrEmpty(nodes.Value.PreferredHost);
         defaultItem.Click += OnDefaultNodeItemClick;
+
+        // 显式触发：全扫一次要发几十 MB 流量，不做成自动行为。
+        PlayerNodeItem.Items.Add(new MenuFlyoutSeparator());
+        var speedTestItem = new MenuFlyoutItem
+        {
+            Text = ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTest),
+        };
+        speedTestItem.Click += OnSpeedTestNodeItemClick;
+        PlayerNodeItem.Items.Add(speedTestItem);
     }
 
     private void ApplyRadioStyle(RadioMenuFlyoutItem item)
@@ -529,6 +538,9 @@ public sealed partial class PlayerInteractivePanel : PlayerControlBase
 
     private void OnNodeItemClick(object sender, RoutedEventArgs e)
         => ViewModel?.SelectNodeCommand.Execute((sender as FrameworkElement)?.Tag?.ToString());
+
+    private void OnSpeedTestNodeItemClick(object sender, RoutedEventArgs e)
+        => ViewModel?.SpeedTestAndSelectNodeCommand.Execute(null);
 
     private void OnMenuButtonClick(object sender, RoutedEventArgs e)
     {

@@ -539,9 +539,9 @@ public sealed partial class PlayerViewModel
     /// <summary>
     /// 获取当前视频流可用的播放节点候选（供播放器右键菜单展示）；未起播或无候选时返回 null.
     /// </summary>
-    internal (IReadOnlyList<string> Hosts, string? CurrentHost, string? PreferredHost)? GetVideoNodes()
+    internal (IReadOnlyList<string> Hosts, IReadOnlyList<string> Urls, string? CurrentHost, string? PreferredHost)? GetVideoNodes()
         => _sourceResolver is MediaSourceResolverBase resolver && resolver.VideoNodeHosts is { Count: > 0 } hosts
-            ? (hosts, resolver.CurrentNodeHost, resolver.PreferredNodeHost)
+            ? (hosts, resolver.VideoNodeUrls ?? hosts, resolver.CurrentNodeHost, resolver.PreferredNodeHost)
             : default;
 
     [RelayCommand]
@@ -555,6 +555,49 @@ public sealed partial class PlayerViewModel
         // 与切换清晰度同一条通路：记住节点后按当前进度重播；host 为空表示回到默认规则。
         resolver.SetPreferredNodeHost(host);
         await Player.ReplayAsync(Player.Position);
+    }
+
+    /// <summary>
+    /// 对当前视频的可用线路测速，并切到最快的一条.
+    /// 刻意做成显式命令：全扫一次要发几十 MB 流量，不能悄悄跑.
+    /// </summary>
+    [RelayCommand]
+    private async Task SpeedTestAndSelectNodeAsync()
+    {
+        if (_sourceResolver is not MediaSourceResolverBase resolver || Player is null)
+        {
+            return;
+        }
+
+        var urls = resolver.VideoNodeUrls;
+        if (urls is null || urls.Count == 0)
+        {
+            Window?.ShowTip(ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestFailed), InfoType.Error);
+            return;
+        }
+
+        // 一条 API 地址即可合成 18 条线路，所以只取第一条可展开的地址，避免同一条流测两遍。
+        var targets = NodeSpeedTestToolkit.ExpandMirrors(urls[0]);
+        Window?.ShowTip(ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestRunning), InfoType.Information);
+        var results = await NodeSpeedTestToolkit.MeasureManyAsync(
+            targets,
+            NodeSpeedTestToolkit.QuickByteCap,
+            NodeSpeedTestToolkit.QuickBudget,
+            CancellationToken.None);
+        var fastest = NodeSpeedTestToolkit.SelectFastest(results);
+        if (fastest is null)
+        {
+            Window?.ShowTip(ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestFailed), InfoType.Error);
+            return;
+        }
+
+        if (fastest.Host is not null && fastest.Host != resolver.CurrentNodeHost)
+        {
+            resolver.SetPreferredNodeHost(fastest.Host);
+            await Player.ReplayAsync(Player.Position);
+        }
+
+        Window?.ShowTip(fastest.Host, InfoType.Success);
     }
 
     [RelayCommand]

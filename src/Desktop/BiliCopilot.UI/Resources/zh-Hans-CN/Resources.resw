@@ -3147,6 +3147,15 @@
   <data name="NodeDefault" xml:space="preserve">
     <value>默认（跟随设置）</value>
   </data>
+  <data name="NodeSpeedTest" xml:space="preserve">
+    <value>测速并选最快</value>
+  </data>
+  <data name="NodeSpeedTestRunning" xml:space="preserve">
+    <value>正在测速，请稍候…</value>
+  </data>
+  <data name="NodeSpeedTestFailed" xml:space="preserve">
+    <value>测速失败：没有可用线路</value>
+  </data>
   <data name="Anime4KAHigh" xml:space="preserve">
     <value>A（高质量）</value>
   </data>
