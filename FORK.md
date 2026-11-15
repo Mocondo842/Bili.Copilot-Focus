@@ -157,11 +157,27 @@
 
 `.github/workflows/fork-build-win-x64.yml`（只在 focus/derec 存在）在 GitHub 托管的 `windows-latest` 上打包：
 
-- 触发：推送到 focus/derec（`src/**`、`scripts/**` 或该 workflow 本身有改动时）；也支持手填版本号的手动触发。
-- 产物：`BiliCopilot.UI_<版本>_x64.msix` + `focus-sideload.cer` + `Install-Focus.ps1/.cmd` + `安装说明.txt`，打成 zip 后同时进 **Actions artifact** 和 **`focus-<版本>` 草稿发布（Draft-first，2.2511.2.919 起）**。草稿对公众完全不可见（不进 Releases 页面、不触发通知、资产无公开下载链接），所以 Releases 页面不再随构建堆积；**每次构建后自动清理 `focus-*` 历史发布（含草稿），只保留最近 3 个**，旧的连同 tag 一起删（别的 tag 不碰）。默认版本见 workflow 的 `DEFAULT_VERSION`（每次改动都要上抬，否则 `Add-AppxPackage` 不会覆盖安装已装的旧版本）。
+- 触发：推送到 focus/derec（`src/**`、`scripts/**` 或该 workflow 本身有改动时）；也支持手动触发（可手填版本号；留空则由 CI 按已有发布自动递增）。
+- 产物：`BiliCopilot.UI_<版本>_x64.msix` + `focus-sideload.cer` + `Install-Focus.ps1/.cmd` + `安装说明.txt`，打成 zip 后同时进 **Actions artifact** 和 **`focus-<版本>` 草稿发布（Draft-first，2.2511.2.919 起）**。草稿对公众完全不可见（不进 Releases 页面、不触发通知、资产无公开下载链接），所以 Releases 页面不再随构建堆积；**每次构建后自动清理 `focus-*` 历史发布（含草稿），只保留最近 3 个**，旧的连同 tag 一起删（别的 tag 不碰）。版本号规则见下面「版本号规则」小节——**从 `3.0.0.1` 起脱离上游命名，末段是构建序号、由 CI 自动递增**，不再需要手动上抬；`DEFAULT_VERSION` 只是基线兜底。
 - **取包**：`gh release download focus-<版本> --repo Mocondo842/Bili.Copilot-Focus --pattern "*.zip" --clobber`（**gh 2.103+ 已支持按 tag 下载草稿**，实测可用；命令直接从构建报告 `ci/last-build.md` 复制）。原始 REST API 的「按 tag 查找」端点对草稿仍返回 404、PS 5.1 向原生程序传参还会弄丢 jq 表达式里的双引号——所以 CI 里的回拉验收保留「列表端点找 release id → asset id → octet-stream」链路（步骤 `Verify draft asset via API`，每次构建自动跑一遍并比对 sha256，不依赖 gh 版本）；本机不要手写这套（2026-10-25 实测：PS 5.1 里 jq 引号被吞、ConvertFrom-Json 也解析不了大 JSON，全是坑）。
 - 自检：构建前跑 `scripts/fork_check.ps1` 锚点守卫；构建后跑 `signtool verify /pa`；`APPX0105/APPX0107`（签名相关告警）被升级为错误——**签名没成功就构建失败**，不会又产出一个装不上的包。
 - 构建报告：无论成败都推到 `ci/logs` 分支的 `ci/last-build.md`（含 job 状态、产物清单、诊断与日志尾部），这是没有 API token 时也能读到 CI 日志的通道。
+
+### 版本号规则（从 3.0.0.1 起脱离上游命名）
+
+上游用 `2.<年月>.<补丁>.<构建>`（如 `2.2511.2.0`）。本 fork 沿用这套号到 `2.2511.2.925` 为止，之后改用**自己的号段**：
+
+| 段 | 含义 | 例 |
+|---|---|---|
+| 第 1 段 | fork 号段 | `3` = derec 线；`4` 预留给 reactor 线 |
+| 第 2、3 段 | 保留为 0 | `0`、`0` |
+| 第 4 段 | 构建序号，单调 +1、永不复用 | `1`、`2`、`3`… |
+
+- **为什么要脱钩**：`focus/reactor` 与 `focus/derec` 曾共用 `2.2511.x`，于是 reactor 的 `2.2511.3.7` 编号比 derec 的 `2.2511.2.925` 大、时间却更早，光看版本号判断不了新旧（那两个 reactor 草稿已删）。
+- **递增由 CI 做**：`Resolve version` 步骤扫现有 `focus-3.*` 发布（草稿也在列表里；草稿不产生 tag ref，所以扫的是 releases 而不是 tags），取数值最大者 +1。`DEFAULT_VERSION` 只当基线兜底，**不再需要每次手动上抬**；手动触发时手填版本号则以手填为准（逃生口）。
+- 末段上限 65535（Windows 版本段的硬上限），到顶就把第 1 段抬到 `4.0.0.1`。
+- 读不到发布列表时**构建直接失败**，不回落基线——否则会产出与已装版本同号、`Add-AppxPackage` 装不上的包。
+- 装回旧版要 `Install-Focus.ps1 -ForceUpdateFromAnyVersion`；CI 的 `keep 3` 会在 `3.0.0.3` 之后把 `2.2511.2.925` 挤掉，需要回滚就提前留档。
 
 ### 签名证书（为什么仓库里有一把私钥）
 

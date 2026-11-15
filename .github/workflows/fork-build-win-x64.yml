@@ -23,7 +23,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'MSIX 版本号（x.x.x.x；留空用默认）'
+        description: 'MSIX 版本号（x.x.x.x）；留空=按已有发布自动递增'
         required: false
         default: ''
 
@@ -36,7 +36,9 @@ concurrency:
 
 # run 重跑说明：run #27 在 setup-env（外部依赖下载）步骤失败、未进入编译；本次重跑用于区分「外部下载抖动」与「依赖升级导致的还原失败」。
 env:
-  DEFAULT_VERSION: '2.2511.2.925'
+  # 版本号基线：derec 线自成 3.0.0.<序号> 号段（脱离上游 2.<年月>.<补丁>.<构建>）。
+  # 留空或 push 触发时，Resolve version 步骤会按现有 focus-3.* 发布自动 +1；这里只在首次构建与兜底时生效。
+  DEFAULT_VERSION: '3.0.0.1'
   REPORT_BRANCH: 'ci/logs'
   CERT_FILE: 'focus-sideload.pfx'
   CERT_CER: 'focus-sideload.cer'
@@ -63,13 +65,54 @@ jobs:
       - name: Resolve version
         id: ver
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $v = "${{ github.event.inputs.version }}"
-          if ([string]::IsNullOrWhiteSpace($v)) { $v = "${{ env.DEFAULT_VERSION }}" }
-          if ($v -match '^\d+\.\d+\.\d+$') { $v = "$v.0" }
-          if ($v -notmatch '^\d+\.\d+\.\d+\.\d+$') { throw "版本号格式不对: $v" }
-          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          Write-Host "build version = $v"
+          $manualVersion = "${{ github.event.inputs.version }}"
+          $base = "${{ env.DEFAULT_VERSION }}"
+          $manual = -not [string]::IsNullOrWhiteSpace($manualVersion)
+
+          function Normalize([string]$v, [string]$what) {
+            if ($v -match '^\d+\.\d+\.\d+$') { $v = "$v.0" }
+            if ($v -notmatch '^\d{1,5}\.\d{1,5}\.\d{1,5}\.\d{1,5}$') { throw "$what 版本号格式不对: $v（要四段数字，例如 3.0.0.1）" }
+            return $v
+          }
+
+          $raw = if ($manual) { $manualVersion } else { $base }
+          $version = Normalize $raw '基线/手填'
+
+          if ($manual) {
+            Write-Host "build version = $version（手动输入，不自动递增）"
+          } else {
+            # 自动递增：扫现有发布列表（草稿也在其中；草稿不产生 tag ref，所以只能扫 releases 不能扫 tags）
+            $tags = $null
+            for ($i = 1; $i -le 2; $i++) {
+              $out = gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" --jq '.[].tag_name' 2>$null
+              if ($LASTEXITCODE -eq 0) { $tags = @($out); break }
+              Write-Host "读取现有发布失败（第 $i 次尝试），3 秒后重试"
+              Start-Sleep -Seconds 3
+            }
+            if ($null -eq $tags) { throw "读不到现有发布列表：拒绝构建（否则可能产出与已装版本同号、装不上的包）" }
+
+            $max = [version]$version
+            $found = $false
+            foreach ($t in $tags) {
+              if ($t -match '^focus-(\d+\.\d+\.\d+\.\d+)$') {
+                $cv = [version]$Matches[1]
+                if ($cv -ge $max) { $max = $cv; $found = $true }
+              }
+            }
+
+            if ($found) {
+              if ($max.Revision -ge 65535) { throw "末段序号已到 65535 上限：请抬 major（把 DEFAULT_VERSION 改成例如 4.0.0.1）" }
+              $version = "{0}.{1}.{2}.{3}" -f $max.Major, $max.Minor, $max.Build, ($max.Revision + 1)
+              Write-Host "build version = $version（自动递增，历史最高 $max）"
+            } else {
+              Write-Host "build version = $version（基线，历史里没有更高版本）"
+            }
+          }
+
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Setup environment (libmpv / ffmpeg / .NET / MSBuild)
         uses: ./.github/actions/setup-env
