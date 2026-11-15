@@ -558,6 +558,9 @@ public sealed partial class PlayerViewModel
             return;
         }
 
+        // 手选是明确意图：一律放行，并清掉旧的失败登记（若再打不开会被重新记回）。
+        FailedNodeRegistry.Clear(host);
+
         // 与切换清晰度同一条通路：记住节点后按当前进度重播；host 为空表示回到默认规则。
         resolver.SetPreferredNodeHost(host);
         await Player.ReplayAsync(Player.Position);
@@ -590,7 +593,9 @@ public sealed partial class PlayerViewModel
             options.Budget,
             options.Concurrency,
             _autoNodeCts?.Token ?? CancellationToken.None);
-        var fastest = NodeSpeedTestToolkit.SelectFastest(results);
+        // 与自动择优同一条规则：打不开的主机不再参与，用户点一次测速也别再踩回去。
+        var usable = results.Where(p => !FailedNodeRegistry.IsFailed(p.Host)).ToList();
+        var fastest = NodeSpeedTestToolkit.SelectFastest(usable);
         if (fastest is null)
         {
             Window?.ShowTip(ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestFailed), InfoType.Error);

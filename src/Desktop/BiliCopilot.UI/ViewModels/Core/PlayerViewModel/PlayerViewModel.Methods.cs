@@ -388,10 +388,14 @@ public sealed partial class PlayerViewModel
                 return;
             }
 
-            var fastest = NodeSpeedTestToolkit.SelectFastest(results);
+            var usable = results.Where(p => !FailedNodeRegistry.IsFailed(p.Host)).ToList();
+            var fastest = NodeSpeedTestToolkit.SelectFastest(usable);
             if (fastest is null)
             {
-                logger.LogWarning("节点：自动择优没有可用结果（{Count} 条全失败），保持当前线路", results.Count);
+                logger.LogWarning(
+                    "节点：自动择优没有可用线路（测速 {Count} 条，可用 {Usable} 条），保持当前线路",
+                    results.Count,
+                    usable.Count);
                 return;
             }
 
@@ -436,7 +440,14 @@ public sealed partial class PlayerViewModel
         if (_autoSwitchedHost is not null && !_autoSwitchRolledBack && Player is not null && Player.Duration < 1)
         {
             _autoSwitchRolledBack = true;
-            logger.LogWarning("节点：自动切换的 {Host} 打不开，回退到默认线路（{Error}）", _autoSwitchedHost, e);
+            logger.LogWarning(
+                "节点：自动切换的 {Host} 打不开，回退到默认线路（{Error}）",
+                _autoSwitchedHost,
+                e);
+
+            // 测速通过 ≠ mpv 能播。这条主机记进名单，后续择优与手测速都不再选它（30 分钟后自动失效）。
+            FailedNodeRegistry.MarkFailed(_autoSwitchedHost);
+
             if (_sourceResolver is MediaSourceResolverBase rollbackResolver)
             {
                 rollbackResolver.SetPreferredNodeHost(default);
