@@ -47,7 +47,8 @@ internal abstract class MediaSourceResolverBase : IMpvMediaSourceResolver
         IReadOnlyList<string> hosts = candidateHosts;
         if (PreferredNodeHost is not null && !candidateHosts.Contains(PreferredNodeHost))
         {
-            hosts = [.. candidateHosts, PreferredNodeHost];
+            // 不能写成集合表达式：AOT/裁剪下「集合表达式 → 非可变接口」会被 CsWinRT1032 拒绝。
+            hosts = new List<string>(candidateHosts) { PreferredNodeHost };
         }
 
         VideoNodeHosts = hosts;

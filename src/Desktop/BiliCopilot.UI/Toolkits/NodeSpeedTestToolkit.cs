@@ -240,7 +240,9 @@ internal static class NodeSpeedTestToolkit
             async (url, token) => results.Add(await MeasureAsync(url, byteCap, budget, token).ConfigureAwait(false)))
             .ConfigureAwait(false);
 
-        return [.. results.OrderByDescending(p => p.Succeeded).ThenByDescending(p => p.MegabytesPerSecond)];
+        // 同上：返回 Interface 时必须给具体类型，集合表达式在 AOT 下会被 CsWinRT1032 拒绝。
+        List<NodeSpeedTestResult> ordered = [.. results.OrderByDescending(p => p.Succeeded).ThenByDescending(p => p.MegabytesPerSecond)];
+        return ordered;
     }
 
     private static HttpClient CreateClient()
