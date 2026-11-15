@@ -369,3 +369,6 @@ tools/Prompt.txt
 src/Desktop/BiliCopilot.UI/Assets/WheelScrollService.exe
 src/Desktop/BiliCopilot.UI/Assets/WheelScrollService.dll
 src/Desktop/BiliCopilot.UI/Assets/WheelScrollService.runtimeconfig.json
+
+# 本地调试日志（fork 历史遗留，不要入库）
+log-*.txt
