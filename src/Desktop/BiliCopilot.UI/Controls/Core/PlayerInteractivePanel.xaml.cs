@@ -2,6 +2,7 @@
 
 using BiliCopilot.UI.Models.Constants;
 using BiliCopilot.UI.Toolkits;
+using BiliCopilot.UI.ViewModels.Core;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
@@ -498,7 +499,7 @@ public sealed partial class PlayerInteractivePanel : PlayerControlBase
         };
         ApplyRadioStyle(defaultItem);
         PlayerNodeItem.Items.Add(defaultItem);
-        foreach (var host in nodes.Value.Hosts)
+        foreach (var host in nodes.Hosts)
         {
             var item = new RadioMenuFlyoutItem
             {
@@ -508,14 +509,28 @@ public sealed partial class PlayerInteractivePanel : PlayerControlBase
             };
             ApplyRadioStyle(item);
             PlayerNodeItem.Items.Add(item);
-            item.IsChecked = host == nodes.Value.CurrentHost;
+            item.IsChecked = host == nodes.CurrentHost;
             item.Click += OnNodeItemClick;
         }
 
-        defaultItem.IsChecked = string.IsNullOrEmpty(nodes.Value.PreferredHost);
+        defaultItem.IsChecked = string.IsNullOrEmpty(nodes.PreferredHost);
         defaultItem.Click += OnDefaultNodeItemClick;
 
-        // 显式触发：全扫一次要发几十 MB 流量，不做成自动行为。
+        // fork：「测速能合成、但 API 没给」的镜像线路也摊开——否则自动择优挑了哪条都无从核对。
+        PlayerNodeItem.Items.Add(new MenuFlyoutSeparator());
+        var mirrorItem = new MenuFlyoutSubItem
+        {
+            Text = ResourceToolkit.GetLocalizedString(StringNames.NodeAllMirrors),
+        };
+        if (Resources.TryGetValue("ContextMenuFlyoutSubItemStyle", out var subItemStyle) && subItemStyle is Style subMenuStyle)
+        {
+            mirrorItem.Style = subMenuStyle;
+        }
+
+        FillMirrorItems(mirrorItem, nodes);
+        PlayerNodeItem.Items.Add(mirrorItem);
+
+        // 显式触发的那一条保留：关掉自动择优时，它是唯一的按需测速入口。
         PlayerNodeItem.Items.Add(new MenuFlyoutSeparator());
         var speedTestItem = new MenuFlyoutItem
         {
@@ -523,6 +538,62 @@ public sealed partial class PlayerInteractivePanel : PlayerControlBase
         };
         speedTestItem.Click += OnSpeedTestNodeItemClick;
         PlayerNodeItem.Items.Add(speedTestItem);
+    }
+
+    /// <summary>
+    /// 填充「全部 CDN 线路」：已测速的带速率、按速率降序在前，未测速的只显主机名，当前线路打勾.
+    /// </summary>
+    /// <param name="parent">子菜单容器.</param>
+    /// <param name="nodes">当前节点快照.</param>
+    private void FillMirrorItems(MenuFlyoutSubItem parent, PlayerNodeSnapshot nodes)
+    {
+        var speeds = new Dictionary<string, double>(StringComparer.Ordinal);
+        if (nodes.Results is not null)
+        {
+            foreach (var result in nodes.Results.Where(p => p.Succeeded))
+            {
+                speeds.TryAdd(result.Host, result.MegabytesPerSecond);
+            }
+        }
+
+        if (speeds.Count == 0)
+        {
+            parent.Items.Add(new MenuFlyoutItem
+            {
+                Text = ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestEmpty),
+                IsEnabled = false,
+            });
+        }
+
+        var ordered = nodes.Mirrors
+            .OrderByDescending(p => speeds.ContainsKey(p))
+            .ThenByDescending(p => speeds.TryGetValue(p, out var tested) ? tested : 0d)
+            .ThenBy(p => p, StringComparer.Ordinal)
+            .ToList();
+
+        foreach (var host in ordered)
+        {
+            var text = speeds.TryGetValue(host, out var speed)
+                ? $"{host} · {speed:F1} MB/s"
+                : host;
+            if (string.Equals(host, nodes.CurrentHost, StringComparison.Ordinal))
+            {
+                text = "✓ " + text;
+            }
+
+            var item = new MenuFlyoutItem
+            {
+                Text = text,
+                Tag = host,
+            };
+            if (Resources.TryGetValue("ContextMenuFlyoutItemStyle", out var value) && value is Style itemStyle)
+            {
+                item.Style = itemStyle;
+            }
+
+            item.Click += OnNodeItemClick;
+            parent.Items.Add(item);
+        }
     }
 
     private void ApplyRadioStyle(RadioMenuFlyoutItem item)

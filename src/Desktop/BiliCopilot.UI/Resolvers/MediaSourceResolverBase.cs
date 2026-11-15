@@ -31,6 +31,16 @@ internal abstract class MediaSourceResolverBase : IMpvMediaSourceResolver
     /// </summary>
     public string? CurrentNodeHost { get; private set; }
 
+    /// <summary>
+    /// 最近一次线路测速的结果（未测速时为 null）；供右键菜单展示速率。
+    /// </summary>
+    public IReadOnlyList<NodeSpeedTestResult>? NodeSpeedTestResults { get; private set; }
+
+    /// <summary>
+    /// 是否正在测速（防重入：起播后台测速与手选命令可能同时触发）。
+    /// </summary>
+    public bool IsNodeSpeedTesting { get; private set; }
+
     public abstract Task<MpvMediaSource> GetSourceAsync();
 
     public abstract IMpvMediaSourceResolver Clone();
@@ -39,8 +49,71 @@ internal abstract class MediaSourceResolverBase : IMpvMediaSourceResolver
         => PreferredNodeHost = string.IsNullOrEmpty(host) ? default : host;
 
     internal void ResetNodeState()
-        => SetPreferredNodeHost(default);
+    {
+        SetPreferredNodeHost(default);
+        NodeSpeedTestResults = default;
+    }
 
+    /// <summary>
+    /// 组装待测线路：优先把第一条可展开的候选按镜像主机展开（18 条），否则退回 API 候选。
+    /// </summary>
+    /// <returns>待测地址，无候选时为空数组.</returns>
+    internal string[] BuildSpeedTestTargets()
+    {
+        var urls = VideoNodeUrls;
+        if (urls is null || urls.Count == 0)
+        {
+            return [];
+        }
+
+        var expandable = urls.FirstOrDefault(NodeSpeedTestToolkit.CanExpand);
+        return expandable is null
+            ? [.. urls]
+            : NodeSpeedTestToolkit.ExpandMirrors(expandable);
+    }
+
+    /// <summary>
+    /// 对当前视频的候选线路测速，结果缓存在 <see cref="NodeSpeedTestResults"/> 上（供菜单展示速率）。
+    /// </summary>
+    /// <param name="byteCap">单条采样字节上限.</param>
+    /// <param name="budget">单条时间上限.</param>
+    /// <param name="concurrency">并发线路数.</param>
+    /// <param name="cancellationToken">取消令牌.</param>
+    /// <returns>测速结果；重入或取消时返回已有结果.</returns>
+    internal async Task<IReadOnlyList<NodeSpeedTestResult>> RunSpeedTestAsync(
+        long byteCap,
+        TimeSpan budget,
+        int concurrency,
+        CancellationToken cancellationToken)
+    {
+        if (IsNodeSpeedTesting)
+        {
+            return NodeSpeedTestResults ?? Array.Empty<NodeSpeedTestResult>();
+        }
+
+        var targets = BuildSpeedTestTargets();
+        if (targets.Length == 0)
+        {
+            return Array.Empty<NodeSpeedTestResult>();
+        }
+
+        IsNodeSpeedTesting = true;
+        try
+        {
+            var results = await NodeSpeedTestToolkit
+                .MeasureManyAsync(targets, byteCap, budget, concurrency, cancellationToken);
+            NodeSpeedTestResults = results;
+            return results;
+        }
+        catch (OperationCanceledException)
+        {
+            return NodeSpeedTestResults ?? Array.Empty<NodeSpeedTestResult>();
+        }
+        finally
+        {
+            IsNodeSpeedTesting = false;
+        }
+    }
     internal void UpdateNodeState(IReadOnlyList<string> candidateHosts, string? currentHost, IReadOnlyList<string>? candidateUrls = null)
     {
         // 手选的主机可能是测速合成出来的，不一定在 API 候选里；补进去，菜单的勾选状态才对得上。

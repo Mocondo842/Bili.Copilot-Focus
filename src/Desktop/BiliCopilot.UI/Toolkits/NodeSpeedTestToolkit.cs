@@ -14,30 +14,41 @@ namespace BiliCopilot.UI.Toolkits;
 internal static class NodeSpeedTestToolkit
 {
     /// <summary>
-    /// 单条线路的默认采样上限：8 MiB.
+    /// 单条线路的默认采样上限：512 KiB（可由设置项改写）。
+    /// 18 条线路全扫最坏 ≈ 9 MiB，够小到可以「每次起播都在后台跑一次」。
     /// </summary>
-    public const long DefaultByteCap = 8 * 1024 * 1024;
+    public const int DefaultSampleKiB = 512;
 
     /// <summary>
-    /// 单条线路的默认时间上限：15 秒.
+    /// 单条线路的默认时间上限：2 秒（每条线路各自计时，不是整批的墙钟上限）。
+    /// 并发是分批的，若按整批计时，后几批会拿不到任何字节，等于把「没测」当成「很慢」。
     /// </summary>
-    public static readonly TimeSpan DefaultBudget = TimeSpan.FromSeconds(15);
+    public const int DefaultBudgetMs = 2000;
 
     /// <summary>
-    /// 交互式「测速并选最快」用的采样上限：2 MiB。
-    /// 18 条线路全扫的下限是 36 MiB，比 <see cref="DefaultByteCap"/> 的 144 MiB 更适合一次点击。
+    /// 默认并发线路数。
     /// </summary>
-    public const long QuickByteCap = 2 * 1024 * 1024;
+    public const int DefaultConcurrency = 6;
 
     /// <summary>
-    /// 交互式测速用的单条时间上限：6 秒。
+    /// 并发上限：再高就会互相抢带宽，把排名测反。
     /// </summary>
-    public static readonly TimeSpan QuickBudget = TimeSpan.FromSeconds(6);
+    public const int MaxConcurrencyLimit = 8;
 
     /// <summary>
-    /// 并发测速的线路数上限：并发过高会互相抢带宽，把排名测反。
+    /// 当前线路不在测速集里时，切换所需的绝对速率门槛（十进制 MB/s）。
     /// </summary>
-    public const int MaxConcurrency = 3;
+    public const double UnknownCurrentThreshold = 3.0;
+
+    /// <summary>
+    /// 切换所需的相对提升倍数。
+    /// </summary>
+    public const double SwitchRatio = 1.25;
+
+    /// <summary>
+    /// 切换所需的绝对提升（十进制 MB/s）：避免「1.0 → 1.3」这种无感切换。
+    /// </summary>
+    public const double SwitchMargin = 0.5;
 
     /// <summary>
     /// 可参与主机替换的镜像主机。
@@ -219,24 +230,66 @@ internal static class NodeSpeedTestToolkit
         => results.Where(p => p.Succeeded).OrderByDescending(p => p.MegabytesPerSecond).FirstOrDefault();
 
     /// <summary>
+    /// 是否应该从当前线路切到测速最快的那条。
+    /// 切换会冲掉已缓冲的数据，所以只在「明显更快」时才切；当前线路不在测速集里时改用绝对门槛。
+    /// </summary>
+    /// <param name="fastest">测速最快的一条.</param>
+    /// <param name="current">当前线路的测速结果；当前主机不在测速集里时为 <see langword="null"/>.</param>
+    /// <param name="reason">判定理由（写日志用）.</param>
+    /// <returns>应该切换时返回 <see langword="true"/>.</returns>
+    public static bool ShouldSwitchTo(NodeSpeedTestResult fastest, NodeSpeedTestResult? current, out string reason)
+    {
+        if (!fastest.Succeeded)
+        {
+            reason = "最快的一条也不可用";
+            return false;
+        }
+
+        if (current is null)
+        {
+            reason = "当前线路不在测速集里";
+            return fastest.MegabytesPerSecond >= UnknownCurrentThreshold;
+        }
+
+        if (string.Equals(fastest.Host, current.Host, StringComparison.Ordinal))
+        {
+            reason = "最快的仍是当前线路";
+            return false;
+        }
+
+        if (!current.Succeeded)
+        {
+            reason = "当前线路测速失败";
+            return true;
+        }
+
+        var ratioReached = fastest.MegabytesPerSecond >= current.MegabytesPerSecond * SwitchRatio;
+        var marginReached = fastest.MegabytesPerSecond - current.MegabytesPerSecond >= SwitchMargin;
+        reason = $"{fastest.MegabytesPerSecond:F1} vs {current.MegabytesPerSecond:F1} MB/s";
+        return ratioReached && marginReached;
+    }
+
+    /// <summary>
     /// 并发测量多条线路（去重后按并发上限跑完）.
     /// </summary>
     /// <param name="urls">待测地址.</param>
     /// <param name="byteCap">采样字节上限.</param>
-    /// <param name="budget">单条时间上限.</param>
+    /// <param name="budget">单条时间上限（每条线路各自计时）.</param>
+    /// <param name="concurrency">并发线路数，内部钳到 1..<see cref="MaxConcurrencyLimit"/>.</param>
     /// <param name="cancellationToken">取消令牌.</param>
     /// <returns>按「成功优先、速率降序」排好的结果.</returns>
     public static async Task<IReadOnlyList<NodeSpeedTestResult>> MeasureManyAsync(
         IEnumerable<string> urls,
         long byteCap,
         TimeSpan budget,
+        int concurrency,
         CancellationToken cancellationToken)
     {
         var targets = urls.Distinct(StringComparer.Ordinal).ToArray();
         var results = new ConcurrentBag<NodeSpeedTestResult>();
         var options = new ParallelOptions
         {
-            MaxDegreeOfParallelism = MaxConcurrency,
+            MaxDegreeOfParallelism = Math.Clamp(concurrency, 1, MaxConcurrencyLimit),
             CancellationToken = cancellationToken,
         };
 

@@ -97,6 +97,36 @@
             <base:SettingsCard Description="{ext:Locale Name=NoP2PDescription}" Header="{ext:Locale Name=NoP2P}">
                 <ToggleSwitch IsOn="{x:Bind ViewModel.NoP2P, Mode=TwoWay}" />
             </base:SettingsCard>
+            <base:SettingsCard Description="{ext:Locale Name=NodeAutoSelectionDescription}" Header="{ext:Locale Name=NodeAutoSelection}">
+                <ToggleSwitch IsOn="{x:Bind ViewModel.AutoSelectFastestNode, Mode=TwoWay}" />
+            </base:SettingsCard>
+            <base:SettingsCard Description="{ext:Locale Name=NodeSampleSizeDescription}" Header="{ext:Locale Name=NodeSampleSize}">
+                <NumberBox
+                    x:Name="NodeSampleBox"
+                    MinWidth="120"
+                    Maximum="8192"
+                    Minimum="64"
+                    SpinButtonPlacementMode="Compact"
+                    ValueChanged="OnNodeSampleChanged" />
+            </base:SettingsCard>
+            <base:SettingsCard Description="{ext:Locale Name=NodeTimeBudgetDescription}" Header="{ext:Locale Name=NodeTimeBudget}">
+                <NumberBox
+                    x:Name="NodeBudgetBox"
+                    MinWidth="120"
+                    Maximum="15000"
+                    Minimum="500"
+                    SpinButtonPlacementMode="Compact"
+                    ValueChanged="OnNodeBudgetChanged" />
+            </base:SettingsCard>
+            <base:SettingsCard Description="{ext:Locale Name=NodeConcurrencyDescription}" Header="{ext:Locale Name=NodeConcurrency}">
+                <NumberBox
+                    x:Name="NodeConcurrencyBox"
+                    MinWidth="120"
+                    Maximum="8"
+                    Minimum="1"
+                    SpinButtonPlacementMode="Compact"
+                    ValueChanged="OnNodeConcurrencyChanged" />
+            </base:SettingsCard>
         </base:SettingsExpander.Items>
     </base:SettingsExpander>
 </local:SettingsPageControlBase>

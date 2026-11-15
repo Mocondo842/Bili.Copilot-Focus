@@ -26,6 +26,9 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
     public async ValueTask DisposeAsync()
     {
         Danmaku.ClearAll();
+
+        // fork：关窗即取消在途测速，别让 HttpClient 继续吃流量。
+        _autoNodeCts?.Cancel();
         _nativeMp?.Dispose();
         _nativeMp = null;
 
@@ -97,6 +100,14 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
         IsStatsOverlayShown = false;
         IsEnd = false;
         _isTlsFailed = false;
+
+        // fork：自动择优的取消源随视频重建——上一个视频的测速不允许跨视频存活。
+        _autoNodeCts?.Cancel();
+        _autoNodeCts?.Dispose();
+        _autoNodeCts = new CancellationTokenSource();
+        _autoNodeSelectionDone = false;
+        _autoSwitchRolledBack = false;
+        _autoSwitchedHost = default;
         _prevPosition = 0;
         IsSubtitleEmpty = true;
         _isDanmakuInitialized = false;

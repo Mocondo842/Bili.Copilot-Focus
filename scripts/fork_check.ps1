@@ -89,6 +89,12 @@ Check '无法避开' 2 'P7 全 PCDN 候选告警（两个 resolver）'
 Check 'GetVideoNodes()' 1 'P8 播放器暴露节点候选'
 Check 'SelectNodeAsync(string? host)' 1 'P9 手选节点命令（按进度重播）'
 Check 'FillNodeMenu();' 1 'P10 右键菜单打开时填充播放节点'
+Check 'RunSpeedTestAsync(' 3 'P14 测速入口（基类定义 + 自动择优 + 手选命令）'
+Check 'ShouldSwitchTo(' 2 'P15 切换阈值判定（定义 + 调用）'
+Check 'NodeSpeedTestResults' 4 'P16 测速结果缓存（基类读写 + 菜单快照）'
+Check 'BuildSpeedTestTargets(' 3 'P17 待测线路组装（定义 + 两处调用）'
+Check 'SettingNames.AutoSelectFastestNode' 2 'P18 自动择优开关读写'
+Check 'StringNames.NodeAllMirrors' 1 'P19 右键菜单「全部 CDN 线路」'
 Check 'public static string? DecodeHtml(string? text)' 1 'F8 实体解码 helper'
 Check 'AppToolkit.DecodeHtml(' 16 'F8 展示文本统一解码（16 处）'
 Check 'private bool _succeeded;' 1 'F9 图片成功标志（DrawImage 置位）'
@@ -116,7 +122,10 @@ foreach ($item in @(
     @('src/Desktop/BiliCopilot.UI/Pages/Overlay/SearchPage.xaml', '<comment:CommentOverlayPanel', 'C17 搜索页评论浮层'),
     @('src/Desktop/BiliCopilot.UI/Controls/Core/PlayerInteractivePanel.xaml', 'x:Name="PlayerNodeItem"', 'P11 播放节点子菜单就位'),
     @('src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw', '<data name="PlayerNode"', 'P12 播放节点文案'),
-    @('src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw', '<data name="NodeDefault"', 'P13 播放节点默认项文案'))) {
+    @('src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw', '<data name="NodeDefault"', 'P13 播放节点默认项文案'),
+    @('src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw', '<data name="NodeAllMirrors"', 'P20 「全部 CDN 线路」文案'),
+    @('src/Desktop/BiliCopilot.UI/Resources/zh-Hans-CN/Resources.resw', '<data name="NodeAutoSelection"', 'P21 自动择优设置文案'),
+    @('src/Desktop/BiliCopilot.UI/Controls/Settings/PlayerBehaviorSettingControl.xaml', 'x:Bind ViewModel.AutoSelectFastestNode, Mode=TwoWay', 'P22 自动择优开关挂在播放器行为设置里'))) {
     if (-not (Select-String -Path $item[0] -SimpleMatch -Pattern $item[1])) {
         Write-Host "MISSING ANCHOR: $($item[2])"
         $fail = 1

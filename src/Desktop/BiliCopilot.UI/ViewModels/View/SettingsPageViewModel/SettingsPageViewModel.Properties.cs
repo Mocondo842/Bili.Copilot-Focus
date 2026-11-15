@@ -89,6 +89,18 @@ public sealed partial class SettingsPageViewModel
     private bool _noP2P;
 
     [ObservableProperty]
+    private bool _autoSelectFastestNode;
+
+    [ObservableProperty]
+    private double _nodeSpeedTestSampleKiB;
+
+    [ObservableProperty]
+    private double _nodeSpeedTestBudgetMs;
+
+    [ObservableProperty]
+    private double _nodeSpeedTestConcurrency;
+
+    [ObservableProperty]
     private string _defaultDownloadPath;
 
     [ObservableProperty]

@@ -50,6 +50,10 @@ public sealed partial class SettingsPageViewModel : AISettingsViewModelBase
         IsNotificationEnabled = SettingsToolkit.ReadLocalSetting(SettingNames.IsNotificationEnabled, true);
         IsVideoMomentNotificationEnabled = SettingsToolkit.ReadLocalSetting(SettingNames.IsVideoMomentNotificationEnabled, true);
         NoP2P = SettingsToolkit.ReadLocalSetting(SettingNames.PlayWithoutP2P, true);   // fork：默认开（避开 PCDN）
+        AutoSelectFastestNode = SettingsToolkit.ReadLocalSetting(SettingNames.AutoSelectFastestNode, true);
+        NodeSpeedTestSampleKiB = SettingsToolkit.ReadLocalSetting(SettingNames.NodeSpeedTestSampleKiB, 512d);
+        NodeSpeedTestBudgetMs = SettingsToolkit.ReadLocalSetting(SettingNames.NodeSpeedTestBudgetMs, 2000d);
+        NodeSpeedTestConcurrency = SettingsToolkit.ReadLocalSetting(SettingNames.NodeSpeedTestConcurrency, 6d);
         PlayerDisplayModeCollection = Enum.GetValues<PlayerDisplayMode>().ToList();
         PreferCodecCollection = Enum.GetValues<PreferCodecType>().ToList();
         PreferQualityCollection = Enum.GetValues<PreferQualityType>().ToList();
@@ -456,6 +460,18 @@ public sealed partial class SettingsPageViewModel : AISettingsViewModelBase
 
     partial void OnNoP2PChanged(bool value)
         => SettingsToolkit.WriteLocalSetting(SettingNames.PlayWithoutP2P, value);
+
+    partial void OnAutoSelectFastestNodeChanged(bool value)
+        => SettingsToolkit.WriteLocalSetting(SettingNames.AutoSelectFastestNode, value);
+
+    partial void OnNodeSpeedTestSampleKiBChanged(double value)
+        => SettingsToolkit.WriteLocalSetting(SettingNames.NodeSpeedTestSampleKiB, value);
+
+    partial void OnNodeSpeedTestBudgetMsChanged(double value)
+        => SettingsToolkit.WriteLocalSetting(SettingNames.NodeSpeedTestBudgetMs, value);
+
+    partial void OnNodeSpeedTestConcurrencyChanged(double value)
+        => SettingsToolkit.WriteLocalSetting(SettingNames.NodeSpeedTestConcurrency, value);
 
     partial void OnDefaultDownloadPathChanged(string value)
         => SettingsToolkit.WriteLocalSetting(SettingNames.DownloadFolder, value);

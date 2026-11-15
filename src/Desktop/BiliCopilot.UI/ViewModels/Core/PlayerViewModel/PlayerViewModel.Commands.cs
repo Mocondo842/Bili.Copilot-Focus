@@ -539,9 +539,15 @@ public sealed partial class PlayerViewModel
     /// <summary>
     /// 获取当前视频流可用的播放节点候选（供播放器右键菜单展示）；未起播或无候选时返回 null.
     /// </summary>
-    internal (IReadOnlyList<string> Hosts, IReadOnlyList<string> Urls, string? CurrentHost, string? PreferredHost)? GetVideoNodes()
+    internal PlayerNodeSnapshot? GetVideoNodes()
         => _sourceResolver is MediaSourceResolverBase resolver && resolver.VideoNodeHosts is { Count: > 0 } hosts
-            ? (hosts, resolver.VideoNodeUrls ?? hosts, resolver.CurrentNodeHost, resolver.PreferredNodeHost)
+            ? new PlayerNodeSnapshot(
+                hosts,
+                resolver.VideoNodeUrls ?? hosts,
+                resolver.CurrentNodeHost,
+                resolver.PreferredNodeHost,
+                resolver.NodeSpeedTestResults,
+                NodeSpeedTestToolkit.MirrorHosts)
             : default;
 
     [RelayCommand]
@@ -559,7 +565,7 @@ public sealed partial class PlayerViewModel
 
     /// <summary>
     /// 对当前视频的可用线路测速，并切到最快的一条.
-    /// 刻意做成显式命令：全扫一次要发几十 MB 流量，不能悄悄跑.
+    /// 与「起播后自动择优」共用同一组设置参数，但用户点一次就无条件切到最快。
     /// </summary>
     [RelayCommand]
     private async Task SpeedTestAndSelectNodeAsync()
@@ -569,24 +575,21 @@ public sealed partial class PlayerViewModel
             return;
         }
 
-        var urls = resolver.VideoNodeUrls;
-        if (urls is null || urls.Count == 0)
+        if (resolver.BuildSpeedTestTargets().Length == 0)
         {
             Window?.ShowTip(ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestFailed), InfoType.Error);
             return;
         }
 
-        // 一条可展开的 API 地址就能合成 18 条线路；若没有可展开的地址，就用 API 给的全部候选。
-        var expandable = urls.FirstOrDefault(NodeSpeedTestToolkit.CanExpand);
-        var targets = expandable is null
-            ? urls.ToArray()
-            : NodeSpeedTestToolkit.ExpandMirrors(expandable);
+        // 手动测过一次就算「本次视频已择优」，后台那条通路不必再跑。
+        _autoNodeSelectionDone = true;
         Window?.ShowTip(ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestRunning), InfoType.Information);
-        var results = await NodeSpeedTestToolkit.MeasureManyAsync(
-            targets,
-            NodeSpeedTestToolkit.QuickByteCap,
-            NodeSpeedTestToolkit.QuickBudget,
-            CancellationToken.None);
+        var options = ReadNodeSpeedTestOptions();
+        var results = await resolver.RunSpeedTestAsync(
+            options.ByteCap,
+            options.Budget,
+            options.Concurrency,
+            _autoNodeCts?.Token ?? CancellationToken.None);
         var fastest = NodeSpeedTestToolkit.SelectFastest(results);
         if (fastest is null)
         {
@@ -597,10 +600,12 @@ public sealed partial class PlayerViewModel
         if (!string.Equals(fastest.Host, resolver.CurrentNodeHost, StringComparison.Ordinal))
         {
             resolver.SetPreferredNodeHost(fastest.Host);
+            _autoSwitchedHost = fastest.Host;
+            _autoSwitchRolledBack = false;
             await Player.ReplayAsync(Player.Position);
         }
 
-        Window?.ShowTip(fastest.Host, InfoType.Success);
+        Window?.ShowTip($"{fastest.Host} · {fastest.MegabytesPerSecond:F1} MB/s", InfoType.Success);
     }
 
     [RelayCommand]
@@ -864,3 +869,20 @@ public sealed partial class PlayerViewModel
         }
     }
 }
+
+/// <summary>
+/// 播放节点菜单的一次性快照：候选主机、当前/手选主机、测速结果与全部镜像主机.
+/// </summary>
+/// <param name="Hosts">API 给的候选主机（BaseUrl 在前，按主机去重）.</param>
+/// <param name="Urls">候选地址（供测速展开）.</param>
+/// <param name="CurrentHost">当前实际生效的视频主机.</param>
+/// <param name="PreferredHost">手选或自动择优选中的主机；null 表示跟随默认规则.</param>
+/// <param name="Results">最近一次测速结果；未测速为 null.</param>
+/// <param name="Mirrors">可合成的全部镜像主机.</param>
+internal sealed record PlayerNodeSnapshot(
+    IReadOnlyList<string> Hosts,
+    IReadOnlyList<string> Urls,
+    string? CurrentHost,
+    string? PreferredHost,
+    IReadOnlyList<NodeSpeedTestResult>? Results,
+    IReadOnlyList<string> Mirrors);

@@ -314,8 +314,138 @@ public sealed partial class PlayerViewModel
     private void OnClientCacheStateChanged(object? sender, MpvCacheStateEventArgs e)
         => CacheStateChanged?.Invoke(this, e);
 
+    /// <summary>
+    /// 读设置里的测速参数并钳到合法范围（本地设置可被外部改写，不能假定它合法）。
+    /// </summary>
+    /// <returns>采样字节上限、单条时间上限、并发线路数.</returns>
+    private static (long ByteCap, TimeSpan Budget, int Concurrency) ReadNodeSpeedTestOptions()
+    {
+        var sampleKiB = Math.Clamp(
+            SettingsToolkit.ReadLocalSetting(SettingNames.NodeSpeedTestSampleKiB, (double)NodeSpeedTestToolkit.DefaultSampleKiB),
+            64d,
+            8192d);
+        var budgetMs = Math.Clamp(
+            SettingsToolkit.ReadLocalSetting(SettingNames.NodeSpeedTestBudgetMs, (double)NodeSpeedTestToolkit.DefaultBudgetMs),
+            500d,
+            15000d);
+        var concurrency = (int)Math.Clamp(
+            SettingsToolkit.ReadLocalSetting(SettingNames.NodeSpeedTestConcurrency, (double)NodeSpeedTestToolkit.DefaultConcurrency),
+            1d,
+            (double)NodeSpeedTestToolkit.MaxConcurrencyLimit);
+        return ((long)sampleKiB * 1024, TimeSpan.FromMilliseconds(budgetMs), concurrency);
+    }
+
+    /// <summary>
+    /// 起播后的自动择优入口：只读设置与状态，不等待，异常在 <see cref="RunAutoNodeSelectionAsync"/> 内消化。
+    /// </summary>
+    private void StartAutoNodeSelection()
+    {
+        if (_autoNodeSelectionDone
+            || _sourceResolver is not MediaSourceResolverBase resolver
+            || resolver.VideoNodeUrls is null
+            || !SettingsToolkit.ReadLocalSetting(SettingNames.AutoSelectFastestNode, true))
+        {
+            return;
+        }
+
+        // 手选的节点优先：用户已经指定了线路，就不再自动覆盖。
+        if (resolver.PreferredNodeHost is not null)
+        {
+            return;
+        }
+
+        _autoNodeSelectionDone = true;
+        _ = RunAutoNodeSelectionAsync(resolver);
+    }
+
+    /// <summary>
+    /// 后台测速并按阈值决定是否切到最快线路；不阻塞起播。
+    /// </summary>
+    /// <param name="resolver">当前播放源处理器.</param>
+    private async Task RunAutoNodeSelectionAsync(MediaSourceResolverBase resolver)
+    {
+        try
+        {
+            var targets = resolver.BuildSpeedTestTargets();
+            if (targets.Length <= 1)
+            {
+                logger.LogInformation("节点：只有 {Count} 条候选线路，跳过自动择优", targets.Length);
+                return;
+            }
+
+            var options = ReadNodeSpeedTestOptions();
+            var token = _autoNodeCts?.Token ?? CancellationToken.None;
+            logger.LogInformation(
+                "节点：自动择优开始（采样 {Sample} KiB/条，单条上限 {Budget} ms，并发 {Concurrency}，目标 {Count} 条）",
+                options.ByteCap / 1024,
+                (int)options.Budget.TotalMilliseconds,
+                options.Concurrency,
+                targets.Length);
+
+            var results = await resolver.RunSpeedTestAsync(options.ByteCap, options.Budget, options.Concurrency, token);
+            if (Player is null || (Window?.IsClosed ?? true) || token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            var fastest = NodeSpeedTestToolkit.SelectFastest(results);
+            if (fastest is null)
+            {
+                logger.LogWarning("节点：自动择优没有可用结果（{Count} 条全失败），保持当前线路", results.Count);
+                return;
+            }
+
+            var current = results.FirstOrDefault(p => string.Equals(p.Host, resolver.CurrentNodeHost, StringComparison.Ordinal));
+            if (!NodeSpeedTestToolkit.ShouldSwitchTo(fastest, current, out var reason))
+            {
+                logger.LogInformation(
+                    "节点：自动择优保持当前线路（{Reason}），最快 {Host} {Speed:F1} MB/s",
+                    reason,
+                    fastest.Host,
+                    fastest.MegabytesPerSecond);
+                return;
+            }
+
+            resolver.SetPreferredNodeHost(fastest.Host);
+            _autoSwitchedHost = fastest.Host;
+            logger.LogInformation(
+                "节点：自动择优切换 {Host} {Speed:F1} MB/s（{Reason}）",
+                fastest.Host,
+                fastest.MegabytesPerSecond,
+                reason);
+
+            // 暂停态只记偏好：立刻重播会把用户暂停中的画面顶掉，下一次重播自然生效。
+            if (Player.PlaybackState == MpvPlayerState.Playing)
+            {
+                await Player.ReplayAsync(Player.Position);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("节点：自动择优已取消");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "节点：自动择优失败");
+        }
+    }
+
     private async void OnClientErrorOccurred(object? sender, MpvError e)
     {
+        // fork：自动择优切到镜像主机后，若 mpv 打不开这个地址，回退到默认线路再重播一次（只一次，不进入循环）。
+        if (_autoSwitchedHost is not null && !_autoSwitchRolledBack && Player is not null && Player.Duration < 1)
+        {
+            _autoSwitchRolledBack = true;
+            logger.LogWarning("节点：自动切换的 {Host} 打不开，回退到默认线路（{Error}）", _autoSwitchedHost, e);
+            if (_sourceResolver is MediaSourceResolverBase rollbackResolver)
+            {
+                rollbackResolver.SetPreferredNodeHost(default);
+            }
+
+            await Player.ReplayAsync();
+            return;
+        }
+
         if (e == MpvError.TlsError)
         {
             if (!_isTlsFailed)
@@ -626,6 +756,9 @@ public sealed partial class PlayerViewModel
                 InitializeDanmakuCommand.Execute(default);
                 _isDanmakuInitialized = true;
             }
+
+            // fork：每次起播后在后台测速，明显更快才切换——首帧不等它。
+            StartAutoNodeSelection();
         }
         else if (e.PropertyName == nameof(Player.CacheSpeed))
         {

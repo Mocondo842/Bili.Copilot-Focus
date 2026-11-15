@@ -42,6 +42,13 @@ public sealed partial class PlayerViewModel
     private bool _isTlsFailed;
     private double _prevPosition;
     private bool _isBroken;
+
+    // fork：每次起播后的「自动择优」状态。_autoNodeSelectionDone 兼作重入闸——切换会触发
+    // IsPlaybackInitialized 再次变化，不能靠事件本身去重。
+    private bool _autoNodeSelectionDone;
+    private bool _autoSwitchRolledBack;
+    private string? _autoSwitchedHost;
+    private CancellationTokenSource? _autoNodeCts;
     private SubtitleItemViewModel? _lastSelectedSubtitle;
 
     public event EventHandler<string> WarningOccurred;
