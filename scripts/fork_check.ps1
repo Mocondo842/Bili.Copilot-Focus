@@ -102,7 +102,7 @@ foreach ($item in @(
     @('src/Desktop/BiliCopilot.UI/Controls/Components/VideoCardControl/VideoCardControl.xaml', '<local:DescriptionButton', 'C14 搜索卡片简介按钮'),
     @('src/Desktop/BiliCopilot.UI/Controls/Components/MomentCardControl/PersonalVideoMomentPresenter.xaml', 'ViewModel.InnerVideo', 'C15 用户空间卡片简介按钮'),
     @('src/Desktop/BiliCopilot.UI/Controls/Comment/CommentItemControl.xaml', 'MaxLines="0"', 'C16 评论不截断'),
-    @('src/Directory.Packages.props', 'Version="1.8.260921001"', 'U9 WindowsAppSDK 升到 1.8 同线最新'),
+    @('src/Directory.Packages.props', 'Version="2.6.5"', 'U9 WindowsAppSDK（reactor 分支：升到 2.6.5 以对齐 Reactor 的 WinUI 2.x 世代）'),
     @('src/Directory.Packages.props', 'Serilog.Sinks.Async', 'U10 异步日志包已声明'),
     @('src/Desktop/BiliCopilot.UI/BiliCopilot.UI.csproj', 'Serilog.Sinks.Async', 'U11 异步日志包已被引用'),
     @('src/Desktop/BiliCopilot.UI/App.xaml.cs', 'Log.CloseAndFlush();', 'U12 退出前刷日志队列'),
