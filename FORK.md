@@ -215,7 +215,9 @@ git push origin focus/derec
 
 - **已验证**（Linux 上可做）：补丁施加与锚点断言；对真实上游快照的三方合并实验——`v2.2510.0.0 → v2.2511.2.0`（154 文件 / +54849 −440）与 `v2.2509.0.0 → v2.2511.2.0`（178 文件 / +55052 −2347）均 **CLEAN、0 冲突**，合并后 5 个锚点全在。
 - **本轮真机验收（`focus-2.2511.2.924`）**：用户实测「原有功能更正常、选择线路后播放没有明显速度瓶颈」——通过。P7/P8 属本轮新增，尚未真机验证；交付后按 `research/80-phase2-acceptance.md` 的清单执行（含 Before/After 截图门）。
-- **未验证**：编译与运行。本补丁是在没有 Windows / Visual Studio / Windows App SDK 的机器上写的，**从未编译过**。请在本机用 Visual Studio 打开 `src/Bili.Copilot.sln` 构建 x64 后验证。
+- **本轮 CI 验证（`focus-2.2511.2.925`，run 43714948324）**：`conclusion=success`，11m16s；`Guard (patch anchors)`（含新增 P14–P22）、`MSBUILD_EXIT=0`（含 AOT 分析）、MSIX 签名、草稿资产回拉 sha256 一致，产物 `BiliCopilot-Focus_2.2511.2.925_x64.zip`。首次运行 43714332874 失败于 3 个分析器错误（`CA2213` + `VSTHRD103`×2，均与 `CancellationTokenSource` 的释放/取消有关），已修在 `17f5213`——这类缺陷本地没有编译器就看不见。
+- **仍未验证**：**运行时行为**。CI 只证明「能编译、能打包、锚点没丢」，不证明测速数值有意义、不证明切换后 mpv 能播、不证明回滚会触发。
+- **编译环境前提**：本补丁是在没有 Windows / Visual Studio / Windows App SDK 的机器上写的，改动本身从未在本机编译；有 CI 之后，编译证据以 `ci/logs` 分支的 `last-build.md` 为准。
 - **待实机确认**：① Windows 10（manifest 声明 `MinVersion=10.0.19041.0`，但上游 README 只写 Windows 11）；② 动态流里实际出现的注入条目类型；③ 关掉导航项后是否真的零请求（抓包）；④ 播放页的 `Related` 字段仍随 `/x/web-interface/view` 到达（本方案只在渲染层摘掉，要连字段都不接收必须改 NuGet 依赖 `bili-kernel`，不做）。
 
 完整的调研与评审记录见上游工作目录 `cross-review/bilicopilot-derec/`（`draft.md` 方案、`report.md` 三轮交叉评审）。本分支的补丁与那份方案逐字一致。
