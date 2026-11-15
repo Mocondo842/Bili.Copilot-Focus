@@ -117,9 +117,8 @@ internal static class NodeSpeedTestToolkit
                 continue;
             }
 
-            // 只换 authority 前缀，查询串必须逐字节不动：upsig 签名就在查询串里，重新序列化会 403。
-            var authority = uri.GetLeftPart(UriPartial.Authority);
-            result.Add(string.Concat("https://", host, url[authority.Length..]));
+            // 只换 authority，路径与查询串逐字节不动：upsig 签名就在查询串里，重新序列化会 403。
+            result.Add(string.Concat("https://", host, uri.PathAndQuery));
         }
 
         return [.. result];

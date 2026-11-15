@@ -44,9 +44,13 @@ internal abstract class MediaSourceResolverBase : IMpvMediaSourceResolver
     internal void UpdateNodeState(IReadOnlyList<string> candidateHosts, string? currentHost, IReadOnlyList<string>? candidateUrls = null)
     {
         // 手选的主机可能是测速合成出来的，不一定在 API 候选里；补进去，菜单的勾选状态才对得上。
-        VideoNodeHosts = PreferredNodeHost is not null && !candidateHosts.Contains(PreferredNodeHost)
-            ? [.. candidateHosts, PreferredNodeHost]
-            : candidateHosts;
+        IReadOnlyList<string> hosts = candidateHosts;
+        if (PreferredNodeHost is not null && !candidateHosts.Contains(PreferredNodeHost))
+        {
+            hosts = [.. candidateHosts, PreferredNodeHost];
+        }
+
+        VideoNodeHosts = hosts;
         VideoNodeUrls = candidateUrls;
         CurrentNodeHost = currentHost;
     }

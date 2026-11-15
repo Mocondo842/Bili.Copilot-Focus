@@ -576,8 +576,11 @@ public sealed partial class PlayerViewModel
             return;
         }
 
-        // 一条 API 地址即可合成 18 条线路，所以只取第一条可展开的地址，避免同一条流测两遍。
-        var targets = NodeSpeedTestToolkit.ExpandMirrors(urls[0]);
+        // 一条可展开的 API 地址就能合成 18 条线路；若没有可展开的地址，就用 API 给的全部候选。
+        var expandable = urls.FirstOrDefault(NodeSpeedTestToolkit.CanExpand);
+        var targets = expandable is null
+            ? urls.ToArray()
+            : NodeSpeedTestToolkit.ExpandMirrors(expandable);
         Window?.ShowTip(ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestRunning), InfoType.Information);
         var results = await NodeSpeedTestToolkit.MeasureManyAsync(
             targets,
@@ -591,7 +594,7 @@ public sealed partial class PlayerViewModel
             return;
         }
 
-        if (fastest.Host is not null && fastest.Host != resolver.CurrentNodeHost)
+        if (!string.Equals(fastest.Host, resolver.CurrentNodeHost, StringComparison.Ordinal))
         {
             resolver.SetPreferredNodeHost(fastest.Host);
             await Player.ReplayAsync(Player.Position);
