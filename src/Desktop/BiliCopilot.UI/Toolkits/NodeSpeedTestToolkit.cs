@@ -1,5 +1,6 @@
 // Copyright (c) Bili Copilot. All rights reserved.
 
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Http.Headers;
 using BiliCopilot.UI.Extensions;
@@ -21,6 +22,22 @@ internal static class NodeSpeedTestToolkit
     /// 单条线路的默认时间上限：15 秒.
     /// </summary>
     public static readonly TimeSpan DefaultBudget = TimeSpan.FromSeconds(15);
+
+    /// <summary>
+    /// 交互式「测速并选最快」用的采样上限：2 MiB。
+    /// 18 条线路全扫的下限是 36 MiB，比 <see cref="DefaultByteCap"/> 的 144 MiB 更适合一次点击。
+    /// </summary>
+    public const long QuickByteCap = 2 * 1024 * 1024;
+
+    /// <summary>
+    /// 交互式测速用的单条时间上限：6 秒。
+    /// </summary>
+    public static readonly TimeSpan QuickBudget = TimeSpan.FromSeconds(6);
+
+    /// <summary>
+    /// 并发测速的线路数上限：并发过高会互相抢带宽，把排名测反。
+    /// </summary>
+    public const int MaxConcurrency = 3;
 
     /// <summary>
     /// 可参与主机替换的镜像主机。
@@ -195,6 +212,37 @@ internal static class NodeSpeedTestToolkit
     /// <returns>最快的一条，全部失败时返回 <see langword="null"/>.</returns>
     public static NodeSpeedTestResult? SelectFastest(IEnumerable<NodeSpeedTestResult> results)
         => results.Where(p => p.Succeeded).OrderByDescending(p => p.MegabytesPerSecond).FirstOrDefault();
+
+    /// <summary>
+    /// 并发测量多条线路（去重后按并发上限跑完）.
+    /// </summary>
+    /// <param name="urls">待测地址.</param>
+    /// <param name="byteCap">采样字节上限.</param>
+    /// <param name="budget">单条时间上限.</param>
+    /// <param name="cancellationToken">取消令牌.</param>
+    /// <returns>按「成功优先、速率降序」排好的结果.</returns>
+    public static async Task<IReadOnlyList<NodeSpeedTestResult>> MeasureManyAsync(
+        IEnumerable<string> urls,
+        long byteCap,
+        TimeSpan budget,
+        CancellationToken cancellationToken)
+    {
+        var targets = urls.Distinct(StringComparer.Ordinal).ToArray();
+        var results = new ConcurrentBag<NodeSpeedTestResult>();
+        var options = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = MaxConcurrency,
+            CancellationToken = cancellationToken,
+        };
+
+        await Parallel.ForEachAsync(
+            targets,
+            options,
+            async (url, token) => results.Add(await MeasureAsync(url, byteCap, budget, token).ConfigureAwait(false)))
+            .ConfigureAwait(false);
+
+        return [.. results.OrderByDescending(p => p.Succeeded).ThenByDescending(p => p.MegabytesPerSecond)];
+    }
 
     private static HttpClient CreateClient()
     {

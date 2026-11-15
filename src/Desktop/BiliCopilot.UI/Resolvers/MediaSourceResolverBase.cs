@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Bili Copilot. All rights reserved.
 
+using BiliCopilot.UI.Toolkits;
 using Richasy.MpvKernel.Player;
 using Richasy.MpvKernel.Player.Models;
 
@@ -21,6 +22,11 @@ internal abstract class MediaSourceResolverBase : IMpvMediaSourceResolver
     public IReadOnlyList<string>? VideoNodeHosts { get; private set; }
 
     /// <summary>
+    /// 最近一次选流得到的视频节点候选地址（未按主机去重，且保持 API 给的原始顺序）；供测速展开用.
+    /// </summary>
+    public IReadOnlyList<string>? VideoNodeUrls { get; private set; }
+
+    /// <summary>
     /// 最近一次实际选中的视频节点主机名.
     /// </summary>
     public string? CurrentNodeHost { get; private set; }
@@ -35,9 +41,13 @@ internal abstract class MediaSourceResolverBase : IMpvMediaSourceResolver
     internal void ResetNodeState()
         => SetPreferredNodeHost(default);
 
-    internal void UpdateNodeState(IReadOnlyList<string> candidateHosts, string? currentHost)
+    internal void UpdateNodeState(IReadOnlyList<string> candidateHosts, string? currentHost, IReadOnlyList<string>? candidateUrls = null)
     {
-        VideoNodeHosts = candidateHosts;
+        // 手选的主机可能是测速合成出来的，不一定在 API 候选里；补进去，菜单的勾选状态才对得上。
+        VideoNodeHosts = PreferredNodeHost is not null && !candidateHosts.Contains(PreferredNodeHost)
+            ? [.. candidateHosts, PreferredNodeHost]
+            : candidateHosts;
+        VideoNodeUrls = candidateUrls;
         CurrentNodeHost = currentHost;
     }
 
@@ -58,6 +68,26 @@ internal abstract class MediaSourceResolverBase : IMpvMediaSourceResolver
         }
 
         return [.. result.Distinct()];
+    }
+
+    /// <summary>
+    /// 在候选中找出手选主机对应的地址：先按原样匹配，找不到再把候选按镜像主机展开后匹配.
+    /// 展开是必须的——测速挑出来的主机往往不在 API 给的那几条候选里。
+    /// </summary>
+    /// <param name="candidates">API 给的候选地址.</param>
+    /// <param name="host">手选的主机名.</param>
+    /// <returns>命中的地址，未命中返回 <see langword="null"/>.</returns>
+    internal static string? FindPreferredUrl(IReadOnlyList<string> candidates, string host)
+    {
+        var direct = candidates.FirstOrDefault(p => GetHost(p) == host);
+        if (direct is not null)
+        {
+            return direct;
+        }
+
+        return candidates
+            .SelectMany(p => NodeSpeedTestToolkit.ExpandMirrors(p))
+            .FirstOrDefault(p => GetHost(p) == host);
     }
 
     internal static string? GetHost(string? url)

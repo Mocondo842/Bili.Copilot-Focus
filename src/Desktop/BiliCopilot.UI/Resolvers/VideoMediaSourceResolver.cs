@@ -216,7 +216,7 @@ internal sealed partial class VideoMediaSourceResolver(IPlayerService playerServ
         {
             var preferred = PreferredNodeHost is null
                 ? default
-                : Array.Find(videoCandidates, p => GetHost(p) == PreferredNodeHost);
+                : FindPreferredUrl(videoCandidates, PreferredNodeHost);
             if (preferred is not null)
             {
                 videoUrl = preferred;
@@ -240,7 +240,7 @@ internal sealed partial class VideoMediaSourceResolver(IPlayerService playerServ
 
         // 把候选与结果交给基类，供右键菜单展示与手选。
         var nodeHosts = videoCandidates.Select(GetHost).OfType<string>().Distinct().ToArray();
-        UpdateNodeState(nodeHosts, GetHost(videoUrl));
+        UpdateNodeState(nodeHosts, GetHost(videoUrl), videoCandidates);
 
         SettingsToolkit.WriteLocalSetting(SettingNames.LastSelectedVideoQuality, selectedFormat.Quality);
         return (videoUrl, audioUrl);
