@@ -25,7 +25,8 @@ if (-not (Test-Path 'src/Desktop/BiliCopilot.UI/Toolkits/DeRecommendToolkit.cs')
 foreach ($file in @(
     'src/Desktop/BiliCopilot.UI/Toolkits/PlayerShortcutToolkit.cs',
     'src/Desktop/BiliCopilot.UI/Controls/Settings/ShortcutSettingControl.xaml',
-    'src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml')) {
+    'src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml',
+    'src/Desktop/BiliCopilot.UI/Toolkits/FailedNodeRegistry.cs')) {
     if (-not (Test-Path $file)) {
         Write-Host "MISSING FILE: $file"
         $fail = 1
@@ -95,6 +96,10 @@ Check 'NodeSpeedTestResults' 4 'P16 测速结果缓存（基类读写 + 菜单�
 Check 'BuildSpeedTestTargets(' 3 'P17 待测线路组装（定义 + 两处调用）'
 Check 'SettingNames.AutoSelectFastestNode' 2 'P18 自动择优开关读写'
 Check 'StringNames.NodeAllMirrors' 1 'P19 右键菜单「全部 CDN 线路」'
+Check 'FailedNodeRegistry.MarkFailed(' 1 'P23 打不开即登记（自动切换回退分支）'
+Check 'FailedNodeRegistry.IsFailed(' 2 'P24 择优前过滤失败主机（自动 + 手测速）'
+Check 'FailedNodeRegistry.Clear(' 1 'P25 手选即解除登记'
+Check 'https://github.com/Mocondo842/Bili.Copilot-Focus/releases' 1 'P26 更新横幅指向本 fork 发布页'
 Check 'public static string? DecodeHtml(string? text)' 1 'F8 实体解码 helper'
 Check 'AppToolkit.DecodeHtml(' 16 'F8 展示文本统一解码（16 处）'
 Check 'private bool _succeeded;' 1 'F9 图片成功标志（DrawImage 置位）'

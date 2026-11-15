@@ -29,6 +29,8 @@ check() { # $1=锚点文本  $2=期望出现次数  $3=说明
   || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Controls/Settings/ShortcutSettingControl.xaml"; fail=1; }
 [ -f src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml ] \
   || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml"; fail=1; }
+[ -f src/Desktop/BiliCopilot.UI/Toolkits/FailedNodeRegistry.cs ] \
+  || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Toolkits/FailedNodeRegistry.cs"; fail=1; }
 
 check "!DeRecommendToolkit.Disabled && _view.Recommends is not null" 1 "G1 播放页推荐区块守卫"
 check "DeRecommendToolkit.Disabled || HotSearchItems.Count > 0"      1 "G2 热搜请求守卫"
@@ -93,6 +95,10 @@ check "NodeSpeedTestResults"                                            4 "P16 �
 check "BuildSpeedTestTargets("                                          3 "P17 待测线路组装（定义 + 两处调用）"
 check "SettingNames.AutoSelectFastestNode"                              2 "P18 自动择优开关读写"
 check "StringNames.NodeAllMirrors"                                      1 "P19 右键菜单「全部 CDN 线路」"
+check "FailedNodeRegistry.MarkFailed("                                  1 "P23 打不开即登记（自动切换回退分支）"
+check "FailedNodeRegistry.IsFailed("                                    2 "P24 择优前过滤失败主机（自动 + 手测速）"
+check "FailedNodeRegistry.Clear("                                       1 "P25 手选即解除登记"
+check "https://github.com/Mocondo842/Bili.Copilot-Focus/releases"       1 "P26 更新横幅指向本 fork 发布页"
 check "public static string? DecodeHtml(string? text)"                 1 "F8 实体解码 helper"
 check "AppToolkit.DecodeHtml("                                        16 "F8 展示文本统一解码（16 处）"
 check "private bool _succeeded;"                                       1 "F9 图片成功标志（DrawImage 置位）"
