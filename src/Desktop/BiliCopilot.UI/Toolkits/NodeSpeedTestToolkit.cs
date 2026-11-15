@@ -88,6 +88,12 @@ internal static class NodeSpeedTestToolkit
             return false;
         }
 
+        // PiliPlus 的 _mirrorRegex 还要求路径是 /upgcxcode；不满足的地址合成出来也没有意义。
+        if (url is null || !url.Contains("/upgcxcode/", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
         return host.Contains("upos-", StringComparison.Ordinal) || host.Contains("-tf-", StringComparison.Ordinal);
     }
 
@@ -277,8 +283,22 @@ internal sealed record NodeSpeedTestResult(
     string? Error)
 {
     /// <summary>
-    /// 下载吞吐（十进制 MB/s），与 PiliPlus 的 Byte/µs 口径一致.
+    /// 下载吞吐（十进制 MB/s，与 PiliPlus 的 Byte/µs 口径一致）.
+    /// 分母刻意用 <see cref="ThroughputSeconds"/> 而不是总耗时：把 DNS/TLS 握手与首包等待剔除掉，
+    /// 否则快线路（2 MiB 只需几十毫秒）会被握手时间主导，排名由 RTT 决定而不是带宽.
     /// </summary>
     public double MegabytesPerSecond
-        => Elapsed.TotalSeconds <= 0 ? 0 : BytesRead / 1_000_000d / Elapsed.TotalSeconds;
+        => ThroughputSeconds <= 0 ? 0 : BytesRead / 1_000_000d / ThroughputSeconds;
+
+    /// <summary>
+    /// 数据真正在流动的时长（总耗时减去首字节耗时），退化时回退到总耗时.
+    /// </summary>
+    public double ThroughputSeconds
+    {
+        get
+        {
+            var window = (Elapsed - TimeToFirstByte).TotalSeconds;
+            return window > 0 ? window : Elapsed.TotalSeconds;
+        }
+    }
 }
