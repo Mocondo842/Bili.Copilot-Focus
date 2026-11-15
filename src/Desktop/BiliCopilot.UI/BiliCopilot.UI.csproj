@@ -312,6 +312,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.UI.Reactor" />
     <PackageReference Include="Microsoft.Graphics.Win2D" />
 	<PackageReference Include="Richasy.AgentKernel.Connectors.Ali" />
 	<PackageReference Include="Richasy.AgentKernel.Connectors.Anthropic" />
