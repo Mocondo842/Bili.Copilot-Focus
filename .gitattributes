@@ -2,4 +2,5 @@
 *.cmd text eol=crlf
 *.bat text eol=crlf
 *.ps1 text eol=crlf
-*.txt text eol=crlf
+# 文本类一律 LF 入库：此处若强制 CRLF，历史上那批「blob 里存 CRLF」的文件会在检出后永远显示为已修改
+*.txt text eol=lf
