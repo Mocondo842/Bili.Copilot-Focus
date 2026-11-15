@@ -28,7 +28,12 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
         Danmaku.ClearAll();
 
         // fork：关窗即取消在途测速，别让 HttpClient 继续吃流量。
-        _autoNodeCts?.Cancel();
+        if (_autoNodeCts is not null)
+        {
+            await _autoNodeCts.CancelAsync();
+            _autoNodeCts.Dispose();
+            _autoNodeCts = null;
+        }
         _nativeMp?.Dispose();
         _nativeMp = null;
 
@@ -102,8 +107,12 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
         _isTlsFailed = false;
 
         // fork：自动择优的取消源随视频重建——上一个视频的测速不允许跨视频存活。
-        _autoNodeCts?.Cancel();
-        _autoNodeCts?.Dispose();
+        if (_autoNodeCts is not null)
+        {
+            await _autoNodeCts.CancelAsync();
+            _autoNodeCts.Dispose();
+        }
+
         _autoNodeCts = new CancellationTokenSource();
         _autoNodeSelectionDone = false;
         _autoSwitchRolledBack = false;
