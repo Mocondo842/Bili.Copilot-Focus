@@ -168,8 +168,10 @@ public sealed partial class AppViewModel : ViewModelBase
     [RelayCommand]
     private async Task ShowUpdateAsync()
     {
-        var packVersion = this.Get<IAppToolkit>().GetPackageVersion();
-        var url = $"https://github.com/Richasy/Bili.Copilot/releases/tag/v{packVersion}";
+        // fork：上游这里打开 Richasy/Bili.Copilot 的版本 tag 页（releases/tag/v{包版本}），本 fork 的版本号在上游不存在。
+        // 本 fork 的发布是草稿 release（CI 用 --draft 创建），草稿不产生 tag，连有权限的账号打开 tag 页也是 404，
+        // 所以只能指向仓库发布页——草稿对有权限的账号可见，非本人看到的是空列表。
+        var url = "https://github.com/Mocondo842/Bili.Copilot-Focus/releases";
         await Launcher.LaunchUriAsync(new Uri(url));
         HideUpdate();
     }
