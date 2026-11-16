@@ -1,7 +1,6 @@
 // Copyright (c) Bili Copilot. All rights reserved.
 
 using System.Globalization;
-using System.Text;
 using BiliCopilot.UI.Extensions;
 using Richasy.BiliKernel.Authenticator;
 using Richasy.BiliKernel.Bili;
