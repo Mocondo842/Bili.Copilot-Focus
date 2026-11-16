@@ -3,7 +3,6 @@
 using BiliCopilot.UI.Toolkits;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
-using Richasy.BiliKernel.Bili.Authorization;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Models.Danmaku;
 using Richasy.BiliKernel.Models.Media;
