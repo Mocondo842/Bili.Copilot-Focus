@@ -397,10 +397,11 @@ internal static class DanmakuLevelProbe
                     if (i > 0) builder.Append(',');
                     builder.Append('{');
                     AppendJsonString(builder, "id"); builder.Append(':'); AppendJsonString(builder, samples[i].Id);
+                    var sample = samples[i];
                     builder.Append(",\"weight\":");
-                    if (samples[i].Weight.HasValue) builder.Append(samples[i].Weight.Value.ToString(CultureInfo.InvariantCulture));
+                    if (sample.Weight is int weight) builder.Append(weight.ToString(CultureInfo.InvariantCulture));
                     else builder.Append("null");
-                    builder.Append(",\"present\":").Append(samples[i].Weight.HasValue ? "true" : "false").Append('}');
+                    builder.Append(",\"present\":").Append(sample.Weight.HasValue ? "true" : "false").Append('}');
                 }
 
                 builder.Append(']');
