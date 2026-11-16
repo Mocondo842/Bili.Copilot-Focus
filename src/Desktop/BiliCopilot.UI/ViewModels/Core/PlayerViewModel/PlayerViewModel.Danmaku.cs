@@ -3,6 +3,7 @@
 using BiliCopilot.UI.Toolkits;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using Richasy.BiliKernel.Bili.Authorization;
 using Richasy.BiliKernel.Bili.Media;
 using Richasy.BiliKernel.Models.Danmaku;
 using Richasy.BiliKernel.Models.Media;
@@ -89,6 +90,8 @@ public sealed partial class PlayerViewModel
                         danmakus.AddRange(danmaku);
                     }
                 }
+
+                await ProbeDanmakuLevelAsync(index, aid, cid, danmaku ?? Array.Empty<DanmakuInformation>());
             }
             catch (Exception ex)
             {
@@ -96,6 +99,30 @@ public sealed partial class PlayerViewModel
             }
 
             semaphore.Release();
+        }
+
+        async Task ProbeDanmakuLevelAsync(int index, string aid, string cid, IReadOnlyList<DanmakuInformation> danmaku)
+        {
+            if (index != 1 || Interlocked.CompareExchange(ref _danmakuLevelProbeDone, 1, 0) != 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var ids = danmaku.Select(p => p.Id).ToArray();
+                var report = await DanmakuLevelProbe.InspectAsync(
+                    aid,
+                    cid,
+                    index,
+                    ids,
+                    _autoNodeCts?.Token ?? CancellationToken.None);
+                logger.LogInformation("弹幕等级探针：{Report}", report);
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "弹幕等级探针：无法读取当前分段的 weight 字段");
+            }
         }
     }
 

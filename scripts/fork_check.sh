@@ -99,11 +99,21 @@ check "FailedNodeRegistry.MarkFailed("                                  1 "P23 �
 check "FailedNodeRegistry.IsFailed("                                    2 "P24 择优前过滤失败主机（自动 + 手测速）"
 check "FailedNodeRegistry.Clear("                                       1 "P25 手选即解除登记"
 check "https://github.com/Mocondo842/Bili.Copilot-Focus/releases"       1 "P26 更新横幅指向本 fork 发布页"
+check "BuildSpeedTestSet("                                               2 "P27 统一测速集（定义 + 解析器入口）"
+check "节点：统一测速集"                                                       1 "P28 测速集来源与当前入集诊断日志"
+check "NodeRecoveryPolicy.IsNodeOpenError("                                1 "P29 错误类型闸（自动回退 + 错误换线共用一次归因）"
+check "NodeRecoveryPolicy.CanRecover("                                     1 "P30 错误换线冷却/次数/手选限流"
+check "RunErrorNodeRecoveryAsync("                                         2 "P31 受控错误换线（定义 + 唯一调用）"
+check "_errorNodeRecoveryConsumed = false;"                               1 "P32 换视频重置错误换线配额"
 check "public static string? DecodeHtml(string? text)"                 1 "F8 实体解码 helper"
 check "AppToolkit.DecodeHtml("                                        16 "F8 展示文本统一解码（16 处）"
 check "private bool _succeeded;"                                       1 "F9 图片成功标志（DrawImage 置位）"
 check "ReloadIfPending("                                               3 "F9 延迟重载入口（定义 + 两条调度路径）"
 check "BaseRetryDelayMs << "                                           1 "F9 重试退避延迟（跳出批量取消窗口）"
+check "DanmakuLevelProbe.InspectAsync("                                     1 "P33 只读弹幕字段探针（唯一调用）"
+check "弹幕等级探针：{Report}"                                                 1 "P34 探针日志只输出结构化证据"
+check "Interlocked.CompareExchange(ref _danmakuLevelProbeDone"             1 "P35 每个视频只探测一次"
+check "class ProbeReport"                                                 1 "P36 探针使用固定报告模型（无反射序列化）"
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 check 的搜索范围内，单独查）
 xcheck() { # $1=文件  $2=锚点文本  $3=说明
@@ -153,6 +163,12 @@ fi
 if grep -rF --include=*.xaml 'Path=ViewModel.ToggleLikeCommand' src >/dev/null 2>&1 \
    || grep -rF --include=*.xaml 'Path=ViewModel.ShowCommentCommand' src >/dev/null 2>&1; then
   echo "UNEXPECTED: 卡片模板里又出现了经典绑定到命令（见 FORK.md C1）"
+  fail=1
+fi
+
+# 反向检查：当前 VOD 弹幕契约没有用户等级，禁止静默加入阈值设置/过滤入口
+if grep -rE --include=*.cs -- 'SettingNames\.DanmakuMinimumUserLevel|Func<DanmakuInformation, int\?>\? userLevelSelector' src >/dev/null 2>&1; then
+  echo "UNEXPECTED: 未经产品决策就把 weight 当成用户等级过滤（见 docs/danmaku.md）"
   fail=1
 fi
 

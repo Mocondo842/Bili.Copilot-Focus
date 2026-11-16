@@ -49,6 +49,11 @@ public sealed partial class PlayerViewModel
     private bool _autoSwitchRolledBack;
     private string? _autoSwitchedHost;
     private CancellationTokenSource? _autoNodeCts;
+    private bool _errorNodeRecoveryConsumed;
+    private bool _isManuallySelectedNode;
+    private DateTimeOffset _lastErrorNodeRecoveryAt = DateTimeOffset.MinValue;
+    private bool _isPlaybackInitialized;
+    private int _danmakuLevelProbeDone;
     private SubtitleItemViewModel? _lastSelectedSubtitle;
 
     public event EventHandler<string> WarningOccurred;

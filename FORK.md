@@ -117,6 +117,8 @@
 | P7 | （Phase 2 真机验收 b）自动择优挑了哪条镜像线路看不见，也无从手选 | 把 `NodeSpeedTestToolkit.MirrorHosts` 的 18 条线路摊到右键「播放节点 → 全部 CDN 线路」子菜单：已测速的显示 `主机 · 12.3 MB/s` 并按速率降序在前，未测速只显主机名，当前线路打勾；点任一条等同手选（`SetPreferredNodeHost` + 按进度重播，与切清晰度同一条通路）。测速结果缓存在 `MediaSourceResolverBase.NodeSpeedTestResults`，随 `ResetNodeState` 按视频重置 |
 | P8 | （Phase 2 真机验收 c）每次起播都要手动点一次测速；2 MiB/6 s 的口径一次全扫太大 | 起播后在 `IsPlaybackInitialized` 分支起一条**后台**测速（`StartAutoNodeSelection`），首帧不等待；`ShouldSwitchTo` 只在「≥1.25 倍且 ≥+0.5 MB/s」时切，当前线路不在测速集里要求 ≥3 MB/s；暂停态只记偏好不重播；切换后若 mpv 打不开（`Duration < 1`）由 `OnClientErrorOccurred` 回退默认线路并重播一次（不回环）。参数入设置：单条采样量（默认 512 KiB，64–8192）、单条时间上限（默认 2000 ms，500–15000）、并发数（默认 6，1–8），全扫最坏 ≈ 9 MiB。时间上限刻意是**单条**而非整批——并发是分批的，整批上限会让后几批拿不到任何字节。`fork_check` 新增 P14–P22 锚点 |
 | P9 | （Phase 2 遗留）某主机测速很快但 mpv 打不开，换视频后又会被重新选中，只能每次手动切回 | 新增 `Toolkits/FailedNodeRegistry.cs`：自动切换过去的主机若 mpv 从未起播（`Duration < 1`）就报错，把该主机记进名单（TTL 30 分钟；进程内、不落盘、重启清零）；「起播自动择优」与「测速并切换」在 `SelectFastest` 之前都过滤它，日志按「测速 N 条 / 可用 M 条」区分「全失败」与「可用线路都在名单里」。用户手选某条主机时清除其登记（视为一次重试）。菜单不标注失败主机，也不提供手动清空——TTL 到期与重启即清。`fork_check` 新增 P23–P26 锚点 |
+| P27–P32 | 统一测速集与受控错误换线 | `NodeSpeedTestToolkit.BuildSpeedTestSet` 把当前线路、API 候选和可合成镜像按主机去重，当前线路置首；自动择优日志给出来源/条数/当前入集。`NodeRecoveryPolicy` 只放行打开/网络类错误，错误换线每视频一次、30 秒冷却、手选优先、在途测速互斥；复用三个测速设置、失败名单和按进度重播。`fork_check` 补 P27–P32 锚点 |
+| P33–P36 | VOD 弹幕来源只读探针 | 固定版本 `DanmakuElem` 字段 9 是 AI 智能屏蔽权重 `weight`，不是每条弹幕的用户等级；当前 `DanmakuInformation` 丢弃该字段。首次弹幕加载仅对第 1 分段经应用注册的 BiliKernel 认证器签名读取 `/x/v2/dm/web/seg.so`，结构化记录 ID/weight/分布/ID 对应/失败原因；不新增设置、阈值、过滤、UI 或依赖。`fork_check` 补 P33–P36 与「禁止静默启用等级过滤」反向检查；语义见 `docs/danmaku.md` |
 
 语义约定（plan#4 说的「设置」）：设置页既有的「不使用P2P」开关就是**默认节点策略**；右键菜单是**当前视频内的手动覆盖**，不跨视频记忆——是否要持久化见 PM 文件待确认 Q2。
 
@@ -204,13 +206,13 @@ bash scripts/focus_sync.sh
 git fetch origin
 git checkout master && git merge --ff-only origin/master
 git checkout focus/derec && git merge --no-edit master
-bash scripts/fork_check.sh        # 必须输出 fork_check: OK (5/5 anchors)；Windows 上用 .\scripts\fork_check.ps1
+bash scripts/fork_check.sh        # 必须输出 fork_check: OK (all anchors present)；Windows 上用 .\scripts\fork_check.ps1
 git push origin focus/derec
 ```
 
 ### 冲突兜底：按锚点重放，不要手工合并整段
 
-补丁只有 4 个文件 5 行，真正会冲突的只有「同一行恰好被上游改过」这一种情况。锚点原文：
+早期去推荐化补丁只有 4 个文件 5 行；后续 P/U/F 系列已扩展为一组路径无关的文本锚点，以 `scripts/fork_check.ps1` 与 `scripts/fork_check.sh` 的完整断言为准。真正会冲突的仍主要是「同一行恰好被上游改过」。以下是早期 G 系列锚点原文：
 
 > 另：`README.md` 在本分支已改写为 fork 专属内容（安装/下载/构建说明），同步上游时**不要**用上游版本整体覆盖——上游对 README 的更新按需摘抄合并即可。
 
@@ -234,7 +236,7 @@ git push origin focus/derec
 - **本轮真机验收（`focus-2.2511.2.924`）**：用户实测「原有功能更正常、选择线路后播放没有明显速度瓶颈」——通过。P7/P8 属本轮新增，尚未真机验证；交付后按 `research/80-phase2-acceptance.md` 的清单执行（含 Before/After 截图门）。
 - **本轮 CI 验证（`focus-2.2511.2.925`，run 43714948324）**：`conclusion=success`，11m16s；`Guard (patch anchors)`（含新增 P14–P22）、`MSBUILD_EXIT=0`（含 AOT 分析）、MSIX 签名、草稿资产回拉 sha256 一致，产物 `BiliCopilot-Focus_2.2511.2.925_x64.zip`。首次运行 43714332874 失败于 3 个分析器错误（`CA2213` + `VSTHRD103`×2，均与 `CancellationTokenSource` 的释放/取消有关），已修在 `17f5213`——这类缺陷本地没有编译器就看不见。
 - **本轮 CI 验证（`focus-3.0.0.3`，run 43732940772）**：`conclusion=success`，11m28s，29 步全过；`Guard (patch anchors)` 含新增 P23–P26、`MSBUILD_EXIT=0`、MSIX 签名、草稿资产回拉 sha256 一致，产物 `BiliCopilot-Focus_3.0.0.3_x64.zip`（191,617,741 B）与 `BiliCopilot.UI_3.0.0.3_x64.msix`（149,826,190 B）。版本由 CI 从 `3.0.0.2` 自行步进，未手改。**仍只证明「能编译、能打包、锚点没丢」**，拉黑逻辑本身待真机。
-- **仍未验证**：**运行时行为**。CI 只证明「能编译、能打包、锚点没丢」，不证明测速数值有意义、不证明切换后 mpv 能播、不证明回滚会触发。
+- **仍未验证**：**运行时行为**。CI 只证明「能编译、能打包、锚点没丢」，不证明测速数值有意义、不证明切换后 mpv 能播、不证明回滚会触发。本轮 P27–P36 尚未经过 Windows CI 或真机：统一测速集、受控错误换线与只读弹幕探针的日志/回归判据见工作区 `research/80-phase2-acceptance.md` §9.7；本机只完成锚点、纯逻辑与文本静态检查。等级屏蔽按用户确认不启用，`weight` 不冒充用户等级。
 - **编译环境前提**：本补丁是在没有 Windows / Visual Studio / Windows App SDK 的机器上写的，改动本身从未在本机编译；有 CI 之后，编译证据以 `ci/logs` 分支的 `last-build.md` 为准。
 - **待实机确认**：① Windows 10（manifest 声明 `MinVersion=10.0.19041.0`，但上游 README 只写 Windows 11）；② 动态流里实际出现的注入条目类型；③ 关掉导航项后是否真的零请求（抓包）；④ 播放页的 `Related` 字段仍随 `/x/web-interface/view` 到达（本方案只在渲染层摘掉，要连字段都不接收必须改 NuGet 依赖 `bili-kernel`，不做）。
 

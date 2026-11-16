@@ -105,6 +105,7 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
         IsStatsOverlayShown = false;
         IsEnd = false;
         _isTlsFailed = false;
+        _isBroken = false;
 
         // fork：自动择优的取消源随视频重建——上一个视频的测速不允许跨视频存活。
         if (_autoNodeCts is not null)
@@ -117,6 +118,11 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
         _autoNodeSelectionDone = false;
         _autoSwitchRolledBack = false;
         _autoSwitchedHost = default;
+        _errorNodeRecoveryConsumed = false;
+        _isManuallySelectedNode = false;
+        _lastErrorNodeRecoveryAt = DateTimeOffset.MinValue;
+        _isPlaybackInitialized = false;
+        _danmakuLevelProbeDone = 0;
         _prevPosition = 0;
         IsSubtitleEmpty = true;
         _isDanmakuInitialized = false;

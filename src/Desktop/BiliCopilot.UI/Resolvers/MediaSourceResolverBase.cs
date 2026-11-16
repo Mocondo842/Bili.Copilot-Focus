@@ -55,22 +55,11 @@ internal abstract class MediaSourceResolverBase : IMpvMediaSourceResolver
     }
 
     /// <summary>
-    /// 组装待测线路：优先把第一条可展开的候选按镜像主机展开（18 条），否则退回 API 候选。
+    /// 组装待测线路：把当前线路、API 候选和可合成镜像汇总后按主机去重。
     /// </summary>
-    /// <returns>待测地址，无候选时为空数组.</returns>
+    /// <returns>待测地址，当前线路在首位；无候选时为空数组.</returns>
     internal string[] BuildSpeedTestTargets()
-    {
-        var urls = VideoNodeUrls;
-        if (urls is null || urls.Count == 0)
-        {
-            return [];
-        }
-
-        var expandable = urls.FirstOrDefault(NodeSpeedTestToolkit.CanExpand);
-        return expandable is null
-            ? [.. urls]
-            : NodeSpeedTestToolkit.ExpandMirrors(expandable);
-    }
+        => NodeSpeedTestToolkit.BuildSpeedTestSet(VideoNodeUrls, CurrentNodeHost);
 
     /// <summary>
     /// 对当前视频的候选线路测速，结果缓存在 <see cref="NodeSpeedTestResults"/> 上（供菜单展示速率）。

@@ -557,12 +557,12 @@ public sealed partial class PlayerViewModel
         {
             return;
         }
-
         // 手选是明确意图：一律放行，并清掉旧的失败登记（若再打不开会被重新记回）。
         FailedNodeRegistry.Clear(host);
 
         // 与切换清晰度同一条通路：记住节点后按当前进度重播；host 为空表示回到默认规则。
         resolver.SetPreferredNodeHost(host);
+        _isManuallySelectedNode = !string.IsNullOrEmpty(host);
         await Player.ReplayAsync(Player.Position);
     }
 
@@ -586,6 +586,7 @@ public sealed partial class PlayerViewModel
 
         // 手动测过一次就算「本次视频已择优」，后台那条通路不必再跑。
         _autoNodeSelectionDone = true;
+        _isManuallySelectedNode = true;
         Window?.ShowTip(ResourceToolkit.GetLocalizedString(StringNames.NodeSpeedTestRunning), InfoType.Information);
         var options = ReadNodeSpeedTestOptions();
         var results = await resolver.RunSpeedTestAsync(

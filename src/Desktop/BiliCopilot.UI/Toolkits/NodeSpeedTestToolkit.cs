@@ -142,6 +142,67 @@ internal static class NodeSpeedTestToolkit
     }
 
     /// <summary>
+    /// 把 API 候选、可合成镜像和当前线路汇总成统一测速集；当前线路排在首位。
+    /// </summary>
+    /// <param name="urls">API 给的视频候选地址.</param>
+    /// <param name="currentHost">实际选中的视频主机.</param>
+    /// <returns>按完整地址与主机去重后的待测地址；无候选时为空数组.</returns>
+    public static string[] BuildSpeedTestSet(IEnumerable<string>? urls, string? currentHost)
+    {
+        var candidates = urls?.Where(p => !string.IsNullOrEmpty(p)).ToArray() ?? [];
+        var currentUrl = FindCurrentUrl(candidates, currentHost);
+        var ordered = currentUrl is null ? new List<string>() : new List<string> { currentUrl };
+        ordered.AddRange(candidates);
+
+        foreach (var expansion in ordered.ToArray().SelectMany(p => ExpandMirrors(p)))
+        {
+            ordered.Add(expansion);
+        }
+
+        var seenHosts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<string>();
+        foreach (var url in ordered)
+        {
+            var host = GetHost(url);
+            if (host is null || !seenHosts.Add(host))
+            {
+                continue;
+            }
+
+            result.Add(url);
+        }
+
+        return [.. result];
+    }
+
+    private static string? FindCurrentUrl(IReadOnlyList<string> candidates, string? currentHost)
+    {
+        if (string.IsNullOrEmpty(currentHost))
+        {
+            return default;
+        }
+
+        var direct = candidates.FirstOrDefault(p => string.Equals(GetHost(p), currentHost, StringComparison.OrdinalIgnoreCase));
+        if (direct is not null)
+        {
+            return direct;
+        }
+
+        var mirrored = candidates
+            .SelectMany(p => ExpandMirrors(p))
+            .FirstOrDefault(p => string.Equals(GetHost(p), currentHost, StringComparison.OrdinalIgnoreCase));
+        if (mirrored is not null)
+        {
+            return mirrored;
+        }
+
+        var template = candidates.FirstOrDefault(CanExpand);
+        return template is not null
+            ? string.Concat("https://", currentHost, new Uri(template).PathAndQuery)
+            : default;
+    }
+
+    /// <summary>
     /// 测量单条线路的下载吞吐。
     /// </summary>
     /// <param name="url">待测地址.</param>

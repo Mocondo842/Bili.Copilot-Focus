@@ -375,11 +375,21 @@ public sealed partial class PlayerViewModel
 
             var options = ReadNodeSpeedTestOptions();
             var token = _autoNodeCts?.Token ?? CancellationToken.None;
+            var apiCount = resolver.VideoNodeUrls?.Count ?? 0;
+            var mirrorCount = targets.Length - apiCount;
+            var currentInSet = targets.Any(p => string.Equals(MediaSourceResolverBase.GetHost(p), resolver.CurrentNodeHost, StringComparison.OrdinalIgnoreCase));
             logger.LogInformation(
                 "节点：自动择优开始（采样 {Sample} KiB/条，单条上限 {Budget} ms，并发 {Concurrency}，目标 {Count} 条）",
                 options.ByteCap / 1024,
                 (int)options.Budget.TotalMilliseconds,
                 options.Concurrency,
+                targets.Length);
+            logger.LogInformation(
+                "节点：统一测速集（API {ApiCount} 条，镜像/其他 {MirrorCount} 条，当前 {CurrentHost}，当前入集 {CurrentInSet}，去重后 {Total} 条）",
+                apiCount,
+                Math.Max(0, mirrorCount),
+                resolver.CurrentNodeHost ?? "未知",
+                currentInSet,
                 targets.Length);
 
             var results = await resolver.RunSpeedTestAsync(options.ByteCap, options.Budget, options.Concurrency, token);
@@ -434,10 +444,67 @@ public sealed partial class PlayerViewModel
         }
     }
 
+    /// <summary>
+    /// 可归因的打开/网络错误后按设置测速一次，只切到可用的最快线路并重播一次。
+    /// </summary>
+    private async Task RunErrorNodeRecoveryAsync(MediaSourceResolverBase resolver)
+    {
+        try
+        {
+            var targets = resolver.BuildSpeedTestTargets();
+            if (targets.Length <= 1 || Player is null)
+            {
+                logger.LogInformation("节点：错误换线跳过（只有 {Count} 条候选线路）", targets.Length);
+                return;
+            }
+
+            var options = ReadNodeSpeedTestOptions();
+            var token = _autoNodeCts?.Token ?? CancellationToken.None;
+            logger.LogWarning(
+                "节点：发生可归因的打开错误，按设置测速换线一次（采样 {Sample} KiB/条，单条上限 {Budget} ms，并发 {Concurrency}，目标 {Count} 条）",
+                options.ByteCap / 1024,
+                (int)options.Budget.TotalMilliseconds,
+                options.Concurrency,
+                targets.Length);
+            var results = await resolver.RunSpeedTestAsync(options.ByteCap, options.Budget, options.Concurrency, token);
+            if (Player is null || (Window?.IsClosed ?? true) || token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            var usable = results.Where(p => !FailedNodeRegistry.IsFailed(p.Host)).ToList();
+            var fastest = NodeSpeedTestToolkit.SelectFastest(usable);
+            if (fastest is null || string.Equals(fastest.Host, resolver.CurrentNodeHost, StringComparison.OrdinalIgnoreCase))
+            {
+                logger.LogWarning("节点：错误换线没有更可用的线路，保持当前线路");
+                return;
+            }
+
+            _autoNodeSelectionDone = true;
+            resolver.SetPreferredNodeHost(fastest.Host);
+            _autoSwitchedHost = fastest.Host;
+            _autoSwitchRolledBack = false;
+            logger.LogWarning("节点：错误换线切到 {Host} {Speed:F1} MB/s", fastest.Host, fastest.MegabytesPerSecond);
+            if (Player.PlaybackState == MpvPlayerState.Playing)
+            {
+                await Player.ReplayAsync(Player.Position);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            logger.LogInformation("节点：错误换线已取消");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "节点：错误换线失败");
+        }
+    }
+
     private async void OnClientErrorOccurred(object? sender, MpvError e)
     {
-        // fork：自动择优切到镜像主机后，若 mpv 打不开这个地址，回退到默认线路再重播一次（只一次，不进入循环）。
-        if (_autoSwitchedHost is not null && !_autoSwitchRolledBack && Player is not null && Player.Duration < 1)
+        var hasAutoSwitch = _autoSwitchedHost is not null && !_autoSwitchRolledBack && Player is not null && Player.Duration < 1;
+        var isNodeOpenError = NodeRecoveryPolicy.IsNodeOpenError(e, Player?.Duration ?? 0);
+        if (hasAutoSwitch && isNodeOpenError)
         {
             _autoSwitchRolledBack = true;
             logger.LogWarning(
@@ -445,15 +512,35 @@ public sealed partial class PlayerViewModel
                 _autoSwitchedHost,
                 e);
 
-            // 测速通过 ≠ mpv 能播。这条主机记进名单，后续择优与手测速都不再选它（30 分钟后自动失效）。
             FailedNodeRegistry.MarkFailed(_autoSwitchedHost);
-
             if (_sourceResolver is MediaSourceResolverBase rollbackResolver)
             {
                 rollbackResolver.SetPreferredNodeHost(default);
             }
 
-            await Player.ReplayAsync();
+            await Player!.ReplayAsync();
+            return;
+        }
+
+        var recoveryResolver = _sourceResolver as MediaSourceResolverBase;
+        var canRecover = recoveryResolver is not null
+            && Player is not null
+            && _isPlaybackInitialized
+            && !(Window?.IsClosed ?? true)
+            && Player.PlaybackState != MpvPlayerState.End
+            && !IsEnd
+            && isNodeOpenError
+            && NodeRecoveryPolicy.CanRecover(
+                _errorNodeRecoveryConsumed,
+                _lastErrorNodeRecoveryAt,
+                DateTimeOffset.UtcNow,
+                _isManuallySelectedNode,
+                recoveryResolver.IsNodeSpeedTesting);
+        if (canRecover)
+        {
+            _errorNodeRecoveryConsumed = true;
+            _lastErrorNodeRecoveryAt = DateTimeOffset.UtcNow;
+            await RunErrorNodeRecoveryAsync(recoveryResolver!);
             return;
         }
 
@@ -467,7 +554,7 @@ public sealed partial class PlayerViewModel
 
             return;
         }
-        else if (Player.Duration < 1 && !_isBroken)
+        else if (Player is not null && !hasAutoSwitch && Player.Duration < 1 && !_isBroken)
         {
             _isBroken = true;
             await Player.ReplayAsync();
@@ -770,6 +857,7 @@ public sealed partial class PlayerViewModel
 
             // fork：每次起播后在后台测速，明显更快才切换——首帧不等它。
             StartAutoNodeSelection();
+            _isPlaybackInitialized = true;
         }
         else if (e.PropertyName == nameof(Player.CacheSpeed))
         {
