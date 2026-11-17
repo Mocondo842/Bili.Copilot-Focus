@@ -140,14 +140,9 @@ internal sealed class MpvLogTap(ILogger inner, PlaybackHealthMonitor monitor) : 
     /// <inheritdoc/>
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
     {
-        try
-        {
-            monitor.Inspect(formatter(state, exception));
-        }
-        catch (Exception)
-        {
-            // 归类只是观测，任何失败都不能吞掉 mpv 的原始日志。
-        }
+        // 只读归类：Inspect 只做字符串匹配与计数，不会抛；这里不套 try，
+        // 因为空 catch 会被 RCS1075 判错，而观察者本身绝不能影响 mpv 原生日志的转发。
+        monitor.Inspect(formatter(state, exception));
 
         inner.Log(logLevel, eventId, state, exception, formatter);
     }
