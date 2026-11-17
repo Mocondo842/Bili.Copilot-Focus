@@ -26,7 +26,8 @@ foreach ($file in @(
     'src/Desktop/BiliCopilot.UI/Toolkits/PlayerShortcutToolkit.cs',
     'src/Desktop/BiliCopilot.UI/Controls/Settings/ShortcutSettingControl.xaml',
     'src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml',
-    'src/Desktop/BiliCopilot.UI/Toolkits/FailedNodeRegistry.cs')) {
+    'src/Desktop/BiliCopilot.UI/Toolkits/FailedNodeRegistry.cs',
+    'src/Desktop/BiliCopilot.UI/Toolkits/PlaybackHealthMonitor.cs')) {
     if (-not (Test-Path $file)) {
         Write-Host "MISSING FILE: $file"
         $fail = 1
@@ -96,7 +97,7 @@ Check 'NodeSpeedTestResults' 4 'P16 测速结果缓存（基类读写 + 菜单�
 Check 'BuildSpeedTestTargets(' 3 'P17 待测线路组装（定义 + 两处调用）'
 Check 'SettingNames.AutoSelectFastestNode' 2 'P18 自动择优开关读写'
 Check 'StringNames.NodeAllMirrors' 1 'P19 右键菜单「全部 CDN 线路」'
-Check 'FailedNodeRegistry.MarkFailed(' 1 'P23 打不开即登记（自动切换回退分支）'
+Check 'FailedNodeRegistry.MarkFailed(' 2 'P23 打不开即登记（自动切换回退 + 换线回滚）'
 Check 'FailedNodeRegistry.IsFailed(' 2 'P24 择优前过滤失败主机（自动 + 手测速）'
 Check 'FailedNodeRegistry.Clear(' 1 'P25 手选即解除登记'
 Check 'https://github.com/Mocondo842/Bili.Copilot-Focus/releases' 1 'P26 更新横幅指向本 fork 发布页'
@@ -115,6 +116,14 @@ Check 'DanmakuLevelProbe.InspectAsync(' 1 'P33 只读弹幕字段探针（唯一
 Check '弹幕等级探针：{Report}' 1 'P34 探针日志只输出结构化证据'
 Check 'Interlocked.CompareExchange(ref _danmakuLevelProbeDone' 1 'P35 每个视频只探测一次'
 Check 'class ProbeReport' 1 'P36 探针使用固定报告模型（无反射序列化）'
+Check '解码：请求 NVDEC（cuda），GPU API Vulkan' 1 'P37 NVDEC 走 Vulkan 后端（cuda 硬解只允许 opengl/vulkan）'
+Check '选流：音频节点 {Host}（{Reason}）' 2 'P38 音频按同一判定顺序选路并记录主机（两个 resolver）'
+Check '音频候选全是 PCDN' 2 'P39 音频回退到 PCDN 时告警（不合规复用「无法避开」）'
+Check 'ReplayAndVerifyAsync(' 5 'P40 换线统一走校验/回滚通路（定义 + 4 处调用）'
+Check '节点：换线回滚到 ' 1 'P41 校验失败/健康窗口故障时回滚原线路'
+Check '节点：播放中只记偏好' 1 'P42 播放中不重播（避免分段 MP4 seek 破坏解码）'
+Check '节点：已有重播在进行，本次只记偏好' 1 'P43 换线重播单飞（并发换线不再叠加）'
+Check '播放健康：' 1 'P44 每段播放收尾写一条健康汇总'
 
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 Check 的搜索范围内，单独查）
@@ -183,6 +192,25 @@ $dmFilterStale = (Get-ChildItem -Path src -Recurse -Filter *.cs |
                  Select-String -Pattern 'SettingNames\.DanmakuMinimumUserLevel|Func<DanmakuInformation, int\?>\? userLevelSelector').Count
 if ($dmFilterStale -gt 0) {
     Write-Host 'UNEXPECTED: 未经产品决策就把 weight 当成用户等级过滤（见 docs/danmaku.md）'
+    $fail = 1
+}
+# 反向检查：换线必须走 ReplayAndVerifyAsync。全树只剩「切清晰度」那一条合法的带进度重播，
+# 多出一条就说明某条换线路径绕过了校验/回滚（见 FORK.md F12）。
+$replayPos = (Get-ChildItem -Path src -Recurse -Filter *.cs |
+              Select-String -SimpleMatch -Pattern 'await Player.ReplayAsync(Player.Position);').Count
+if ($replayPos -ne 1) {
+    Write-Host "UNEXPECTED: 带进度重播出现 $replayPos 处（应只有切清晰度 1 处），换线路径绕过了 ReplayAndVerifyAsync（见 FORK.md F12）"
+    $fail = 1
+}
+
+# 反向检查：NVDEC 分支不得再配 d3d11 后端（cuda 硬解只允许 opengl/vulkan，见 FORK.md F10）。
+# 分支横跨多行，而 Select-String 是逐行匹配的（多行正则永远不命中），所以对整块文本用 .NET 正则。
+$nvdecPattern = 'PreferDecodeType\.NVDEC\)\s*\{(?:[^{}]|\{[^{}]*\})*?GpuApiType\.D3D11'
+$nvdecD3d11 = @(Get-ChildItem -Path src -Recurse -Filter *.cs | Where-Object {
+    [regex]::IsMatch((Get-Content $_.FullName -Raw), $nvdecPattern)
+}).Count
+if ($nvdecD3d11 -gt 0) {
+    Write-Host 'UNEXPECTED: NVDEC 分支又配了 d3d11 后端（见 FORK.md F10）'
     $fail = 1
 }
 

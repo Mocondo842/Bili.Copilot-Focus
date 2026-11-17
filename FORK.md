@@ -14,7 +14,7 @@
 | `master` | 上游镜像，只用于同步 | **不在 master 上提交**；用 GitHub 的「Sync fork」把它对齐上游 |
 | `focus/derec` | 去推荐化补丁分支（本分支） | 上面的补丁只在这里提交；每次同步后 `master` 合进本分支 |
 
-## 补丁清单（相对上游 master：`src/` 65 files changed, 2994 insertions(+), 249 deletions(-)；含本 fork 自带的构建/安装脚本与文档（不含运行日志）共 78 files changed, ≈4555 insertions(+), ≈400 deletions(-)，因这一行本身也在统计内故写「约」。两个数字都可用 `git diff --shortstat origin/master HEAD -- src/`（与不加 `-- src/`）随时重算；早先写的 55/1875/206 与 65/3074/269 已无法复现，是换基线前留下的过期数字，作废）
+## 补丁清单（相对上游 master：`src/` 67 files changed, 3876 insertions(+), 250 deletions(-)；含本 fork 自带的构建/安装脚本与文档（不含运行日志）共 81 files changed, ≈5546 insertions(+), ≈402 deletions(-)，因这一行本身也在统计内故写「约」。两个数字都可用 `git diff --shortstat origin/master -- src/`（与不加 `-- src/`）随时重算；数值随每轮增量变化，读到旧数字就是旧轮次留下的，以当场重算为准）
 
 | 编号 | 文件 | 改动 |
 |---|---|---|
@@ -88,7 +88,10 @@
 | C3 | 评论超过 4 行被截断成 `...`，必须点开才能看全 | `EmoteTextBlock` 的 `MaxLines` 默认 4，超出行数就出现 `...` 按钮。评论处传 `MaxLines="0"`（`RichTextBlock.MaxLines` 的 0 = 自动/不限行数），`IsTextTrimmed` 恒为 false，`...` 按钮自然不再出现；控件与浮层本身保留（动态简介等仍在用） |
 | F8 | 标题里出现 `&quot;` 之类的实体（如搜索结果里 `"虚构"` 显示成 `&quot;虚构&quot;`），卡片、播放页标题、窗口标题都带着 | B 站**搜索等接口**的标题/简介带 HTML 实体转义，而 bili-kernel 的搜索适配器只剥 `<em class="keyword">` 高亮标签、**没做实体解码**（`/x/web-interface/view` 详情接口返回的是原文，所以只有搜索/动态来的条目中招）。修法：`AppToolkit.DecodeHtml()`（`WebUtility.HtmlDecode`，对无实体原文是无操作）套在展示文本上——视频卡片 Title/Description/Subtitle、播放页两个 connector 的 Title/Subtitle/Description、mpv `MediaName`（窗口标题/SMTC 的来源）、Pin、弹幕面板标题，共 16 处。**没做**：PGC/专栏搜索卡片没有 Title 透传属性（直接绑 `Data.Identifier.Title`），要动 XAML 绑定，本轮不动 |
 | F9 | 2.2511.2.917 真机反馈（plan.md A）：①一级评论区仍有缩略图不加载（但点开大图有内容）；②「查看回复」进二级界面后主楼部分图消失且无法点开（大图窗口里能切到这些图） | P3 只恢复了九宫格**数据源**，单个 `BasicCoverImage` 的恢复不可靠：13 天日志证实失败 98.7% 是「同一秒内批量取消」，U19 的**立即**重试 2 次全落在同一个取消窗口里就耗尽了预算；「查看回复」折叠/展开面板又不触发 `Loaded`，没有重载入口。改成：重试带退避延迟（600ms 起、翻倍，跳出取消窗口，每轮预算 4 次）、`Loaded` 时若从未成功（`DrawImage` 未执行过）就**强制重赋 Source**（x:Bind 对同值 Uri 不触发变更，回收复用的容器光重置预算没用）、终身上限 8 次防真 404 随滚动无限重试。若「无法点开」仍复现，说明二级面板的 Gallery 数据源另有问题，需新日志定位 |
-
+| F10 | NVDEC 硬解等于没开：日志 23 条 `CUDA hwdec only works with OpenGL or Vulkan backends`，2160p HEVC 实际走软解 | 设置里选 NVDEC 时，代码给的是 `vo=gpu-next` + `gpu-api=d3d11` + `hwdec=cuda`，而 cuda 硬解只允许 opengl/vulkan 后端，mpv 直接拒配并退回软解——软解 4K HEVC 跟不上，mpv 自己在 desync 提示里点名 `too slow hardware`。改成 Vulkan 后端（`GpuApiType.Vulkan` + `GpuContextType.WindowsVulkan`），并写一条 `解码：请求 NVDEC（cuda），GPU API Vulkan` 供日志核对。**回滚方案**：一行改成 `HardwareDecodeType.D3d11va`（NVIDIA 下同样走 NVDEC 硬件解码） |
+| F11 | 声音与画面脱钩：视频已切到镜像线路，音频仍留在打不开的 PCDN 节点 | `GetPlayUrls()` 里 `PreferredNodeHost` 只作用于**视频**候选；音频候选只受「不使用 P2P」影响，且回退到首条候选时**不写日志**。日志证据：视频切 `upos-sz-mirror*` 的同时音频仍请求 `xy183...mcdn.bilivideo.cn:8082`，产生 `SSL connect error`×5、`Can not open external file`×2、`Failed to open`×4 → 音频打不开 → 时间戳重置 → 音画脱钩。改成与视频同一判定顺序（手选主机 → 非 PCDN → 首条候选），每个 resolver 补一条 `选流：音频节点 {Host}（{Reason}）`，回退到 PCDN 时另报 `音频候选全是 PCDN`（**刻意不复用**「无法避开」：那是 P7 锚点，复用会打乱守卫计数） |
+| F12 | 播放中换线后花屏/进度条错乱：21 秒后时间戳重置，随后 1110 条 HEVC 参考帧错误 | 换线统一走 `Player.ReplayAsync(Player.Position)`，而 B 站 DASH 是分段 MP4，seek 不保证落在关键帧上（日志 `stream 0: no join point found`）→ 从 GOP 中间起解 → 参考帧全丢（`Could not find ref with POC`）、音频 PTS 从 25.077 跳到 1163.598（`Invalid audio PTS`）→ `Reset playback due to audio timestamp reset` → 10 条 `Audio/Video desynchronisation detected`。三道修法：①**自动择优在「播放中且当前流健康」时只记偏好不重播**（下次起播生效，手选仍可立即换）；②手选/手测速/错误换线统一走 `ReplayAndVerifyAsync`：单飞闸 + 8 秒内校验「时长已知且位置误差 ≤2 秒」+ 25 秒健康窗口（真机故障出现在换线 21 秒后，窗口短了抓不到），异常则回滚原线路并把换来的主机记进 `FailedNodeRegistry`；③每视频最多回滚一次，避免抖动来回跳。**没做**：切清晰度的重播仍是直接 `ReplayAsync`（回滚语义不适用），守卫脚本用「全树带进度重播只能剩 1 处」锁住这条边界 |
+| F13 | 换了线但坏了这件事在日志里看不出来，也无从判断修没修好 | 新增 `Toolkits/PlaybackHealthMonitor.cs`：`MpvLogTap`（`ILogger` 装饰器，原样转发 + 旁路归类）包在 `MpvClient.CreateAsync` 的 logger 实参上，按「时间戳重置 → 不同步 → 解码故障 → 打开失败」归类计数；每段播放收尾写一条 `播放健康：{Scope} 解码错误 n / PTS 重置 n / 不同步 n / 打开失败 n`（无故障不输出）。这份计数同时是 F12 回滚的判据，也是下一份真机日志的验收判据。**局限**：归类靠 mpv 措辞的子串匹配，mpv 改文案就会失效——失效时只退回「位置校验」，不影响主流程 |
 > `AUDCLNT_E_DEVICE_INVALIDATED` 是 WASAPI 音频端点被系统回收（切设备/蓝牙断开/休眠）时报的错，音频输出重建由 libmpv 的 wasapi AO 负责，不在应用层；这块没动。F4 针对的是同一条日志里那串音频流地址打开失败的报错。
 
 快捷键（S1）的三条既有行为照旧保留，改动只把「按键 → 动作」这段变成可配置：

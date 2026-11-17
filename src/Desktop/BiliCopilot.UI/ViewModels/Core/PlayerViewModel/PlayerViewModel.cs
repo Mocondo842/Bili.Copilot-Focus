@@ -65,6 +65,9 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
             Connector.PropertiesUpdated -= OnConnectorPropertiesUpdated;
         }
 
+        // fork：关窗/换视频前把本次播放的健康计数落一条汇总，下一份日志据此判断修没修好。
+        LogPlaybackHealth("本次播放");
+
         if (Client?.IsDisposed == false)
         {
             Client.ErrorOccurred -= OnClientErrorOccurred;
@@ -119,8 +122,12 @@ public sealed partial class PlayerViewModel(DispatcherQueue queue, ILogger<Playe
         _autoSwitchRolledBack = false;
         _autoSwitchedHost = default;
         _errorNodeRecoveryConsumed = false;
+        _nodeRollbackConsumed = false;
         _isManuallySelectedNode = false;
         _lastErrorNodeRecoveryAt = DateTimeOffset.MinValue;
+        // fork：上一个视频的故障计数先落一条汇总再清零——跨视频累计会让判据无从归因。
+        LogPlaybackHealth("上一段播放");
+        _playbackHealth.Reset();
         _isPlaybackInitialized = false;
         _danmakuLevelProbeDone = 0;
         _prevPosition = 0;

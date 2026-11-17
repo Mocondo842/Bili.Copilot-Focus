@@ -31,6 +31,8 @@ check() { # $1=锚点文本  $2=期望出现次数  $3=说明
   || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Controls/Components/DescriptionButton.xaml"; fail=1; }
 [ -f src/Desktop/BiliCopilot.UI/Toolkits/FailedNodeRegistry.cs ] \
   || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Toolkits/FailedNodeRegistry.cs"; fail=1; }
+[ -f src/Desktop/BiliCopilot.UI/Toolkits/PlaybackHealthMonitor.cs ] \
+  || { echo "MISSING FILE: src/Desktop/BiliCopilot.UI/Toolkits/PlaybackHealthMonitor.cs"; fail=1; }
 
 check "!DeRecommendToolkit.Disabled && _view.Recommends is not null" 1 "G1 播放页推荐区块守卫"
 check "DeRecommendToolkit.Disabled || HotSearchItems.Count > 0"      1 "G2 热搜请求守卫"
@@ -95,7 +97,7 @@ check "NodeSpeedTestResults"                                            4 "P16 �
 check "BuildSpeedTestTargets("                                          3 "P17 待测线路组装（定义 + 两处调用）"
 check "SettingNames.AutoSelectFastestNode"                              2 "P18 自动择优开关读写"
 check "StringNames.NodeAllMirrors"                                      1 "P19 右键菜单「全部 CDN 线路」"
-check "FailedNodeRegistry.MarkFailed("                                  1 "P23 打不开即登记（自动切换回退分支）"
+check "FailedNodeRegistry.MarkFailed("                                  2 "P23 打不开即登记（自动切换回退 + 换线回滚）"
 check "FailedNodeRegistry.IsFailed("                                    2 "P24 择优前过滤失败主机（自动 + 手测速）"
 check "FailedNodeRegistry.Clear("                                       1 "P25 手选即解除登记"
 check "https://github.com/Mocondo842/Bili.Copilot-Focus/releases"       1 "P26 更新横幅指向本 fork 发布页"
@@ -114,6 +116,14 @@ check "DanmakuLevelProbe.InspectAsync("                                     1 "P
 check "弹幕等级探针：{Report}"                                                 1 "P34 探针日志只输出结构化证据"
 check "Interlocked.CompareExchange(ref _danmakuLevelProbeDone"             1 "P35 每个视频只探测一次"
 check "class ProbeReport"                                                 1 "P36 探针使用固定报告模型（无反射序列化）"
+check "解码：请求 NVDEC（cuda），GPU API Vulkan"                            1 "P37 NVDEC 走 Vulkan 后端（cuda 硬解只允许 opengl/vulkan）"
+check "选流：音频节点 {Host}（{Reason}）"                                    2 "P38 音频按同一判定顺序选路并记录主机（两个 resolver）"
+check "音频候选全是 PCDN"                                                   2 "P39 音频回退到 PCDN 时告警（不合规复用「无法避开」）"
+check "ReplayAndVerifyAsync("                                             5 "P40 换线统一走校验/回滚通路（定义 + 4 处调用）"
+check "节点：换线回滚到 "                                                    1 "P41 校验失败/健康窗口故障时回滚原线路"
+check "节点：播放中只记偏好"                                                  1 "P42 播放中不重播（避免分段 MP4 seek 破坏解码）"
+check "节点：已有重播在进行，本次只记偏好"                                       1 "P43 换线重播单飞（并发换线不再叠加）"
+check "播放健康："                                                           1 "P44 每段播放收尾写一条健康汇总"
 
 # 卡片与评论改造的 XAML 锚点（XAML 不在 check 的搜索范围内，单独查）
 xcheck() { # $1=文件  $2=锚点文本  $3=说明
@@ -169,6 +179,20 @@ fi
 # 反向检查：当前 VOD 弹幕契约没有用户等级，禁止静默加入阈值设置/过滤入口
 if grep -rE --include=*.cs -- 'SettingNames\.DanmakuMinimumUserLevel|Func<DanmakuInformation, int\?>\? userLevelSelector' src >/dev/null 2>&1; then
   echo "UNEXPECTED: 未经产品决策就把 weight 当成用户等级过滤（见 docs/danmaku.md）"
+  fail=1
+fi
+
+# 反向检查：换线必须走 ReplayAndVerifyAsync。全树只剩「切清晰度」那一条合法的带进度重播，
+# 多出一条就说明某条换线路径绕过了校验/回滚（见 FORK.md F12）。
+n_replay=$(grep -rF --include=*.cs -- "await Player.ReplayAsync(Player.Position);" src | wc -l)
+if [ "$n_replay" -ne 1 ]; then
+  echo "UNEXPECTED: 带进度重播出现 $n_replay 处（应只有切清晰度 1 处），换线路径绕过了 ReplayAndVerifyAsync（见 FORK.md F12）"
+  fail=1
+fi
+
+# 反向检查：NVDEC 分支不得再配 d3d11 后端（cuda 硬解只允许 opengl/vulkan，见 FORK.md F10）。
+if grep -rPzo --include=*.cs 'PreferDecodeType\.NVDEC\)\s*\{(?:[^{}]|\{[^{}]*\})*?GpuApiType\.D3D11' src >/dev/null 2>&1; then
+  echo "UNEXPECTED: NVDEC 分支又配了 d3d11 后端（见 FORK.md F10）"
   fail=1
 fi
 

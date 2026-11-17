@@ -232,9 +232,39 @@ internal sealed partial class PgcMediaSourceResolver(IPlayerService playerServic
             }
         }
 
-        if (withoutP2P && audioCandidates.Length > 0)
+        // fork：音频原先只受「不使用 P2P」过滤，手选节点只作用于视频——视频换到镜像线路后音频仍留在
+        // 打不开的 PCDN 节点，音频加载失败会重置时间戳，音画因此脱钩。改成与视频同一判定顺序：
+        // 手选主机 → 非 PCDN → 候选首条，并把选定的节点与原因写进日志。
+        if (audioCandidates.Length > 0)
         {
-            audioUrl = Array.Find(audioCandidates, p => !AppToolkit.IsP2PUrl(p)) ?? audioCandidates[0];
+            var preferredAudio = PreferredNodeHost is null
+                ? default
+                : FindPreferredUrl(audioCandidates, PreferredNodeHost);
+            var followedVideoNode = preferredAudio is not null;
+            string chosenAudio;
+            string reason;
+            if (preferredAudio is not null)
+            {
+                chosenAudio = preferredAudio;
+                reason = "跟随视频线路";
+            }
+            else if (withoutP2P)
+            {
+                chosenAudio = Array.Find(audioCandidates, p => !AppToolkit.IsP2PUrl(p)) ?? audioCandidates[0];
+                reason = AppToolkit.IsP2PUrl(chosenAudio) ? "回退首条候选" : "非 PCDN 候选";
+            }
+            else
+            {
+                chosenAudio = audioCandidates[0];
+                reason = "回退首条候选";
+            }
+
+            audioUrl = chosenAudio;
+            logger.LogInformation("选流：音频节点 {Host}（{Reason}）", GetHost(chosenAudio), reason);
+            if (!followedVideoNode && AppToolkit.IsP2PUrl(chosenAudio))
+            {
+                logger.LogWarning("音频候选全是 PCDN");
+            }
         }
 
         // 把候选与结果交给基类，供右键菜单展示与手选。

@@ -560,10 +560,11 @@ public sealed partial class PlayerViewModel
         // 手选是明确意图：一律放行，并清掉旧的失败登记（若再打不开会被重新记回）。
         FailedNodeRegistry.Clear(host);
 
-        // 与切换清晰度同一条通路：记住节点后按当前进度重播；host 为空表示回到默认规则。
+        // 记住节点后按当前进度重播；host 为空表示回到默认规则。
         resolver.SetPreferredNodeHost(host);
         _isManuallySelectedNode = !string.IsNullOrEmpty(host);
-        await Player.ReplayAsync(Player.Position);
+        // fork：手选与自动择优共用同一条校验/回滚通路——换上去的主机若打不开或重播后解码异常，自动退回原线路。
+        await ReplayAndVerifyAsync(Player.Position);
     }
 
     /// <summary>
@@ -608,7 +609,7 @@ public sealed partial class PlayerViewModel
             resolver.SetPreferredNodeHost(fastest.Host);
             _autoSwitchedHost = fastest.Host;
             _autoSwitchRolledBack = false;
-            await Player.ReplayAsync(Player.Position);
+            await ReplayAndVerifyAsync(Player.Position);
         }
 
         Window?.ShowTip($"{fastest.Host} · {fastest.MegabytesPerSecond:F1} MB/s", InfoType.Success);

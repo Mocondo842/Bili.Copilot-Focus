@@ -88,7 +88,8 @@ public sealed partial class PlayerViewModel
                 UseConfig = false,
                 LoadScripts = true,
             };
-            Client = await MpvClient.CreateAsync(mpvPath, options, logger: logger);
+            // fork：包一层旁路观察者，把 mpv 的故障行归类成「播放健康」判据；日志本身照原样转发。
+            Client = await MpvClient.CreateAsync(mpvPath, options, logger: new MpvLogTap(logger, _playbackHealth));
             Client.ErrorOccurred += OnClientErrorOccurred;
             Client.CacheStateChanged += OnClientCacheStateChanged;
             SetSubtitleDelaySecondsCommand.Execute(SubtitleDelaySeconds);
@@ -116,10 +117,14 @@ public sealed partial class PlayerViewModel
             }
             else if (decodeType == PreferDecodeType.NVDEC)
             {
+                // fork：hwdec=cuda（NVDEC）只允许 opengl/vulkan 后端，配 d3d11 时 mpv 直接报
+                // 「CUDA hwdec only works with OpenGL or Vulkan backends」并退回软解——2160p HEVC 软解跟不上，
+                // 表现为音画不同步。这里改用 Vulkan 后端，让 NVDEC 真正生效。
                 await Client.SetVideoOutputAsync(VideoOutputType.GpuNext);
-                await Client.SetGpuApiAsync(GpuApiType.D3D11);
-                await Client.SetGpuContextAsync(GpuContextType.D3D11);
+                await Client.SetGpuApiAsync(GpuApiType.Vulkan);
+                await Client.SetGpuContextAsync(GpuContextType.WindowsVulkan);
                 await Client.SetHardwareDecodeAsync(HardwareDecodeType.Nvdec);
+                logger.LogInformation("解码：请求 NVDEC（cuda），GPU API Vulkan");
             }
             else if (decodeType == PreferDecodeType.Vulkan)
             {
@@ -315,6 +320,163 @@ public sealed partial class PlayerViewModel
         => CacheStateChanged?.Invoke(this, e);
 
     /// <summary>
+    /// 有故障时写一条「播放健康」汇总；没有故障不输出，避免日志噪音.
+    /// </summary>
+    /// <param name="scope">这次汇总覆盖的范围，例如「上一段播放」.</param>
+    private void LogPlaybackHealth(string scope)
+    {
+        if (!_playbackHealth.HasAnyFault)
+        {
+            return;
+        }
+
+        logger.LogInformation("播放健康：{Scope} {Summary}", scope, _playbackHealth.Summarize());
+    }
+
+    /// <summary>
+    /// 换线后的重播：带进度重播并校验落点，失败或随后出现致命故障就回滚到原线路.
+    /// 分段 MP4 的 seek 不保证落在关键帧上（ffmpeg 会报「no join point found」），重播后必须先
+    /// 证明「还在原位且解码正常」，否则画面会从 GOP 中间开始，参考帧全丢，音画永久脱钩.
+    /// </summary>
+    /// <param name="position">期望恢复到的播放位置（秒）.</param>
+    /// <returns>任务.</returns>
+    private async Task ReplayAndVerifyAsync(double position)
+    {
+        if (Player is null)
+        {
+            return;
+        }
+
+        // 单飞：并发换线只允许第一条真正重播，其余只留偏好——重播叠加会把 mpv 反复拽回起播。
+        if (Interlocked.Exchange(ref _replayInFlight, 1) == 1)
+        {
+            logger.LogInformation("节点：已有重播在进行，本次只记偏好");
+            return;
+        }
+
+        var resolver = _sourceResolver as MediaSourceResolverBase;
+        var previousHost = resolver?.CurrentNodeHost;
+        var switchedHost = _autoSwitchedHost;
+
+        // 换线前的累计致命故障数做基线，用来判断「这次重播有没有引入新故障」。
+        var baseline = _playbackHealth.FatalFaultCount;
+        var restored = false;
+
+        try
+        {
+            await Player.ReplayAsync(position);
+            restored = await WaitPlaybackRestoredAsync(position);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "节点：重播校验失败");
+        }
+        finally
+        {
+            // 单飞闸只包住「重播 + 落点校验」：健康窗口最多要跑 25 秒，占着闸门会把手动换线吞掉。
+            _ = Interlocked.Exchange(ref _replayInFlight, 0);
+        }
+
+        if (!restored)
+        {
+            await RollbackNodeAsync(resolver, previousHost, switchedHost, "重播后没有回到原进度");
+            return;
+        }
+
+        // 真机日志里故障出现在换线 21 秒之后（切换 20:52:16 → 时间戳重置 20:52:37），
+        // 窗口短于那个延迟就永远抓不到「换了线但坏了」的情况，所以取 25 秒。
+        if (await WaitFatalFaultAsync(baseline))
+        {
+            await RollbackNodeAsync(resolver, previousHost, switchedHost, "重播后出现解码或时间戳故障");
+        }
+    }
+
+    /// <summary>
+    /// 轮询等待「还在原位」：时长已知且位置与期望相差不超过 2 秒.
+    /// </summary>
+    /// <param name="position">期望位置（秒）.</param>
+    /// <returns>8 秒内达到即 <see langword="true"/>.</returns>
+    private async Task<bool> WaitPlaybackRestoredAsync(double position)
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(8);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            if (Player is null || (Window?.IsClosed ?? true))
+            {
+                return false;
+            }
+
+            if (Player.Duration > 0 && Math.Abs(Player.Position - position) <= 2)
+            {
+                return true;
+            }
+
+            await Task.Delay(250);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 轮询等待换线后新增的致命故障（解码、时间戳重置、不同步）.
+    /// </summary>
+    /// <param name="baseline">重播前的累计致命故障数.</param>
+    /// <returns>25 秒窗口内出现新故障即 <see langword="true"/>.</returns>
+    private async Task<bool> WaitFatalFaultAsync(int baseline)
+    {
+        var deadline = DateTimeOffset.UtcNow.AddSeconds(25);
+        while (DateTimeOffset.UtcNow < deadline)
+        {
+            if (_playbackHealth.FatalFaultCount > baseline)
+            {
+                return true;
+            }
+
+            await Task.Delay(250);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 回滚到换线前的线路：把换来的主机记进失败名单、恢复原偏好并从 0 起播一次.
+    /// 每个视频只回滚一次，避免网络抖动时来回跳.
+    /// </summary>
+    /// <param name="resolver">当前播放源处理器.</param>
+    /// <param name="previousHost">换线前的主机.</param>
+    /// <param name="switchedHost">换上去的主机.</param>
+    /// <param name="reason">回滚原因（写进日志）.</param>
+    /// <returns>任务.</returns>
+    private async Task RollbackNodeAsync(MediaSourceResolverBase? resolver, string? previousHost, string? switchedHost, string reason)
+    {
+        if (Player is null || (Window?.IsClosed ?? true))
+        {
+            return;
+        }
+
+        // 闸门里有新的换线在跑时不要回滚：那是用户/择优刚发起的新决策，回滚会把它的落点又拽回来。
+        if (Volatile.Read(ref _replayInFlight) == 1)
+        {
+            logger.LogInformation("节点：有新的换线正在进行，本次回滚不再执行");
+            return;
+        }
+
+        if (_nodeRollbackConsumed)
+        {
+            logger.LogWarning("节点：{Reason}，但本视频已回滚过一次，不再重复回滚", reason);
+            return;
+        }
+
+        _nodeRollbackConsumed = true;
+        FailedNodeRegistry.MarkFailed(switchedHost ?? resolver?.CurrentNodeHost);
+        resolver?.SetPreferredNodeHost(previousHost);
+        _autoSwitchedHost = default;
+        _autoSwitchRolledBack = true;
+        logger.LogWarning("节点：换线回滚到 {Host}（{Reason}）", previousHost ?? "默认线路", reason);
+        await Player.ReplayAsync();
+    }
+
+    /// <summary>
     /// 读设置里的测速参数并钳到合法范围（本地设置可被外部改写，不能假定它合法）。
     /// </summary>
     /// <returns>采样字节上限、单条时间上限、并发线路数.</returns>
@@ -428,10 +590,20 @@ public sealed partial class PlayerViewModel
                 fastest.MegabytesPerSecond,
                 reason);
 
-            // 暂停态只记偏好：立刻重播会把用户暂停中的画面顶掉，下一次重播自然生效。
+            // fork：播放中换线必须带进度重播，而分段 MP4 的 seek 不保证落在关键帧上——日志里
+            // 「no join point found」之后紧跟着参考帧全丢、音画脱钩、时间戳重置。所以「播放中且当前流健康」
+            // 只记偏好，下一次起播自然生效；只有缓冲/已出故障（确实播不动）时才当场换并校验回滚。
+            // 想立刻切换请用右键「播放节点」手选，那是明确意图，走同一套校验。
             if (Player.PlaybackState == MpvPlayerState.Playing)
             {
-                await Player.ReplayAsync(Player.Position);
+                if (!Player.IsLoading && !_playbackHealth.HasFatalFault)
+                {
+                    logger.LogInformation("节点：播放中只记偏好，下次起播生效（需要立刻切换请右键手选线路）");
+                }
+                else
+                {
+                    await ReplayAndVerifyAsync(Player.Position);
+                }
             }
         }
         catch (OperationCanceledException)
@@ -487,7 +659,7 @@ public sealed partial class PlayerViewModel
             logger.LogWarning("节点：错误换线切到 {Host} {Speed:F1} MB/s", fastest.Host, fastest.MegabytesPerSecond);
             if (Player.PlaybackState == MpvPlayerState.Playing)
             {
-                await Player.ReplayAsync(Player.Position);
+                await ReplayAndVerifyAsync(Player.Position);
             }
         }
         catch (OperationCanceledException)

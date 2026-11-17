@@ -4,6 +4,7 @@ using BiliCopilot.UI.Forms;
 using BiliCopilot.UI.Models;
 using BiliCopilot.UI.Models.Constants;
 using BiliCopilot.UI.Resolvers;
+using BiliCopilot.UI.Toolkits;
 using BiliCopilot.UI.ViewModels.Items;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Dispatching;
@@ -53,6 +54,14 @@ public sealed partial class PlayerViewModel
     private bool _isManuallySelectedNode;
     private DateTimeOffset _lastErrorNodeRecoveryAt = DateTimeOffset.MinValue;
     private bool _isPlaybackInitialized;
+
+    // fork：mpv 故障行的归类计数器（换线回滚与真机验收共用同一份判据）。
+    private readonly PlaybackHealthMonitor _playbackHealth = new();
+
+    // fork：换线重播的单飞闸与「本视频已回滚过」的配额。重播叠会把 mpv 反复拽回起播；
+    // 回滚不设配额则一旦网络抖动会来回跳线路。
+    private int _replayInFlight;
+    private bool _nodeRollbackConsumed;
     private int _danmakuLevelProbeDone;
     private SubtitleItemViewModel? _lastSelectedSubtitle;
 
